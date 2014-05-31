@@ -1,0 +1,29 @@
+{?
+	$actions = $control->hasActions() ? $control->getComponent(\Grido\Components\Actions\Action::ID)->getComponents() : array();
+}
+
+{foreach $data as $item}
+	{continueIf !$item->isAllowedToRead()}
+
+	<div data-toggle="tooltip" title="" data-original-title="<h5>{$item->name}</h5><strong>{_Created}:</strong>&nbsp;{$item->created|date:'%d.%m.%Y %H:%M:%S'}<br /><strong>{_Updated}:</strong>&nbsp;{$item->updated|date:'%d.%m.%Y %H:%M:%S'}{if $item->author}<br /><strong>{_Author}:</strong>&nbsp;{$item->author}{/if}" class="dropdown item {if $item instanceof \Venne\Files\DirEntity}d{else}f{/if}" id="{if $item instanceof \Venne\Files\DirEntity}d{else}f{/if}_{$item->id}">
+				{if $item instanceof \Venne\Files\DirEntity}
+					{var $type = 'folder'}
+				{else}
+					{var $type = 'text-plain'}
+				{/if}
+				{var $ext = \Nette\Utils\Strings::lower(substr($item->getName(), strrpos($item->getName(), '.') + 1))}
+				<a class="img-thumbnail dropdown-toggle" href="{if $type=='folder'}{=$control->lookup('Venne\Files\FileBrowser\FileBrowserControl')->link('changeDir!', array($item->id))}{else}{$basePath}/public/media/{$item->path}{/if}">
+					{if $type=='text-plain' && ($ext=='png' || $ext=='jpg' || $ext=='gif')}
+						<img n:src="$item->getPath(), size=>'64x64', format=>8" alt="" />
+					{else}
+						<img src="{path @venne.files/icons/places/64/$type.png}" alt="" />
+					{/if}
+					<span>{\Nette\Utils\Strings::truncate($item->name, 25)}</span>
+				</a>
+			<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+				 {foreach $actions as $action}
+                    <li>{control $action $item}</li>
+                 {/foreach}
+			</ul>
+	</div>
+{/foreach}

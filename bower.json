@@ -1,0 +1,7 @@
+{
+	"name": "venne-files",
+	"version": "2.2.0",
+	"dependencies": {
+		"blueimp-file-upload": "~9.5.7"
+	}
+}
