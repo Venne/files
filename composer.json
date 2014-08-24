@@ -19,7 +19,7 @@
 		"venne/venne": "~3.0.0"
 	},
 	"require-dev": {
-		"venne/tester": "~1.1.0"
+		"nette/tester": "~1.2.0"
 	},
 	"autoload": {
 		"psr-4": {
