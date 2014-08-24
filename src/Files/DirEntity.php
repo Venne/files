@@ -13,10 +13,10 @@ namespace Venne\Files;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-use Venne\Security\RoleEntity;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
+ *
  * @ORM\Entity
  * @ORM\Table(name="directory", uniqueConstraints={@ORM\UniqueConstraint(
  *    name="path_idx", columns={"path"}
@@ -24,45 +24,50 @@ use Venne\Security\RoleEntity;
  * @ORM\HasLifecycleCallbacks
  * @ORM\EntityListeners({"Venne\Files\Listeners\FileListener"})
  */
-class DirEntity extends BaseFileEntity
+class DirEntity extends \Venne\Files\BaseFileEntity
 {
 
 	/**
-	 * @var ArrayCollection|DirEntity[]
+	 * @var \Venne\Files\DirEntity[]|\Doctrine\Common\Collections\ArrayCollection
+	 *
 	 * @ORM\OneToMany(targetEntity="DirEntity", mappedBy="parent")
 	 */
 	protected $children;
 
 	/**
-	 * @var ArrayCollection|FileEntity[]
+	 * @var \Venne\Files\FileEntity[]|\Doctrine\Common\Collections\ArrayCollection
+	 *
 	 * @ORM\OneToMany(targetEntity="FileEntity", mappedBy="parent")
 	 */
 	protected $files;
 
 	/**
-	 * @var RoleEntity[]
+	 * @var \Venne\Security\RoleEntity[]
+	 *
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="dir_read")
 	 **/
 	protected $read;
 
 	/**
-	 * @var RoleEntity[]
+	 * @var \Venne\Security\RoleEntity[]
+	 *
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="dir_write")
 	 **/
 	protected $write;
 
-
 	public function __construct()
 	{
 		parent::__construct();
 
-		$this->children = new ArrayCollection;
-		$this->files = new ArrayCollection;
+		$this->children = new ArrayCollection();
+		$this->files = new ArrayCollection();
 	}
 
-
+	/**
+	 * @return string
+	 */
 	public function __toString()
 	{
 		$ret = array();
@@ -76,8 +81,9 @@ class DirEntity extends BaseFileEntity
 		return implode('/', array_reverse($ret));
 	}
 
-
 	/**
+	 * @internal
+	 *
 	 * @ORM\PreFlush()
 	 */
 	public function preUpdate()
@@ -95,6 +101,7 @@ class DirEntity extends BaseFileEntity
 			if (file_exists($oldPublicPath)) {
 				rename($oldPublicPath, $publicPath);
 			}
+
 			return;
 		}
 
@@ -108,8 +115,9 @@ class DirEntity extends BaseFileEntity
 		}
 	}
 
-
 	/**
+	 * @internal
+	 *
 	 * @ORM\PreRemove()
 	 */
 	public function preRemove()
@@ -129,37 +137,41 @@ class DirEntity extends BaseFileEntity
 		@rmdir($publicPath);
 	}
 
-
 	/**
-	 * @param string $children
+	 * @param \Venne\Files\DirEntity $child
 	 */
-	public function setChildren(ArrayCollection $children)
+	public function addChild(DirEntity $child)
 	{
-		$this->children = $children;
+		$this->children->add($child);
 	}
 
-
 	/**
-	 * @return DirEntity[]|ArrayCollection
+	 * @return \Venne\Files\DirEntity[]
 	 */
 	public function getChildren()
 	{
-		return $this->children;
+		return $this->children->toArray();
 	}
 
-
-	public function setFiles($files)
+	/**
+	 * @param \Venne\Files\FileEntity $file
+	 */
+	public function addFile(FileEntity $file)
 	{
-		$this->files = $files;
+		$this->files->add($file);
 	}
 
-
+	/**
+	 * @return \Venne\Files\FileEntity[]
+	 */
 	public function getFiles()
 	{
-		return $this->files;
+		return $this->files->toArray();
 	}
 
-
+	/**
+	 * @internal
+	 */
 	public function generatePath()
 	{
 		parent::generatePath();
@@ -173,7 +185,9 @@ class DirEntity extends BaseFileEntity
 		}
 	}
 
-
+	/**
+	 * @internal
+	 */
 	public function setPermissionRecursively()
 	{
 		foreach ($this->getChildren() as $dir) {
@@ -182,7 +196,8 @@ class DirEntity extends BaseFileEntity
 		}
 
 		foreach ($this->getFiles() as $file) {
-			$dir->copyPermission();
+			$file->copyPermission();
 		}
 	}
+
 }

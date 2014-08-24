@@ -17,19 +17,20 @@ use Venne\Forms\IFormFactory;
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class FileEditFormFactory implements IFormFactory
+class FileEditFormFactory implements \Venne\Forms\IFormFactory
 {
 
-	/** @var IFormFactory */
+	/** @var \Venne\Forms\IFormFactory */
 	private $formFactory;
-
 
 	public function __construct(IFormFactory $formFactory)
 	{
 		$this->formFactory = $formFactory;
 	}
 
-
+	/**
+	 * @return \Nette\Application\UI\Form
+	 */
 	public function create()
 	{
 		$form = $this->formFactory->create();
@@ -46,7 +47,7 @@ class FileEditFormFactory implements IFormFactory
 			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
 		$form->addCheckbox('protected', 'Protected')
-			->addCondition($form::EQUAL, TRUE)
+			->addCondition($form::EQUAL, true)
 			->toggle('form-permissions');
 
 		$form->addGroup()->setOption('id', 'form-permissions');

@@ -1,6 +1,6 @@
 {
 	"name": "venne/files",
-	"description": "Venne system administration",
+	"description": "File mmanager",
 	"keywords": ["nette", "venne", "system", "administration"],
 	"homepage": "http://venne.cz",
 	"license": ["BSD-3-Clause", "GPL-2.0", "GPL-3.0"],
@@ -12,7 +12,7 @@
 	],
 	"support": {
 		"email": "info@venne.cz",
-		"issues": "https://github.com/Venne/venne/issues"
+		"issues": "https://github.com/Venne/files/issues"
 	},
 	"require": {
 		"php": ">=5.4.0",

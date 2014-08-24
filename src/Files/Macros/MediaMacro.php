@@ -12,7 +12,6 @@
 namespace Venne\Files\Macros;
 
 use Kdyby\Doctrine\EntityDao;
-use Latte\Macros\MacroSet;
 use Latte\CompileException;
 use Latte\Compiler;
 use Latte\MacroNode;
@@ -21,20 +20,18 @@ use Nette\Utils\Strings;
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class MediaMacro extends MacroSet
+class MediaMacro extends \Latte\Macros\MacroSet
 {
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	private static $fileDao;
 
-	/** @var array */
+	/** @var string[] */
 	private static $imageExtensions = array('jpeg', 'png', 'gif');
 
-
 	/**
-	 * @static
-	 * @param Compiler $compiler
-	 * @return \Nette\Latte\Macros\MacroSet|void
+	 * @param \Latte\Compiler $compiler
+	 * @return \Venne\Files\Macros\MediaMacro
 	 */
 	public static function install(Compiler $compiler)
 	{
@@ -42,66 +39,56 @@ class MediaMacro extends MacroSet
 
 		// file
 		$me->addMacro('file', array($me, 'macroFile'));
-		$me->addMacro('fhref', NULL, NULL, function (MacroNode $node, $writer) use ($me) {
+		$me->addMacro('fhref', null, null, function (MacroNode $node, $writer) use ($me) {
 			return ' ?> href="<?php ' . $me->macroFile($node, $writer) . ' ?>"<?php ';
 		});
-
 
 		// image
 		$me->addMacro('img', array($me, 'macroImage'));
 		$me->addMacro('image', array($me, 'macroImage'));
-		$me->addMacro('ihref', NULL, NULL, function (MacroNode $node, $writer) use ($me) {
+		$me->addMacro('ihref', null, null, function (MacroNode $node, $writer) use ($me) {
 			return ' ?> href="<?php ' . $me->macroImage($node, $writer) . ' ?>"<?php ';
 		});
-		$me->addMacro('src', NULL, NULL, function (MacroNode $node, $writer) use ($me) {
+		$me->addMacro('src', null, null, function (MacroNode $node, $writer) use ($me) {
 			return ' ?> src="<?php ' . $me->macroImage($node, $writer) . ' ?>"<?php ';
 		});
 
 		return $me;
 	}
 
-
 	/**
-	 * @static
-	 * @param MacroNode $node
-	 * @param $writer
-	 * @return mixed
+	 * @param \Latte\MacroNode $node
+	 * @param string $writer
+	 * @return string
 	 */
 	public static function macroFile(MacroNode $node, $writer)
 	{
 		return $writer->write('echo $basePath . \Venne\Files\Macros\MediaMacro::proccessFile(%node.word)');
 	}
 
-
 	/**
-	 * @static
-	 * @param MacroNode $node
-	 * @param $writer
-	 * @return mixed
+	 * @param \Latte\MacroNode $node
+	 * @param string $writer
+	 * @return string
 	 */
 	public static function macroImage(MacroNode $node, $writer)
 	{
 		return $writer->write('echo $basePath . \Venne\Files\Macros\MediaMacro::proccessImage(%node.word, %node.array)');
 	}
 
-
 	/**
-	 * @static
-	 * @param MacroNode $node
-	 * @param $writer
-	 * @return mixed
+	 * @param string $path
+	 * @return string
 	 */
 	public static function proccessFile($path)
 	{
 		return "/public/media/{$path}";
 	}
 
-
 	/**
-	 * @static
-	 * @param MacroNode $node
-	 * @param $writer
-	 * @return mixed
+	 * @param string $path
+	 * @param string[] $args
+	 * @return string
 	 */
 	public static function proccessImage($path, $args = array())
 	{
@@ -122,7 +109,6 @@ class MediaMacro extends MacroSet
 
 		return "/public/media/_cache/{$size}/{$format}/{$type}/{$path}";
 	}
-
 
 	public static function setFileDao(EntityDao $fileDao)
 	{

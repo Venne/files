@@ -18,7 +18,7 @@ interface IBrowserControlFactory
 {
 
 	/**
-	 * @return BrowserControl
+	 * @return \Venne\Files\SideComponents\BrowserControl
 	 */
 	public function create();
 

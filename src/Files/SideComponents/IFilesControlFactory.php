@@ -18,7 +18,7 @@ interface IFilesControlFactory
 {
 
 	/**
-	 * @return FilesControl
+	 * @return \Venne\Files\SideComponents\FilesControl
 	 */
 	public function create();
 

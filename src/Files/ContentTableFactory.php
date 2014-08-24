@@ -11,9 +11,9 @@
 
 namespace Venne\Files;
 
+use Venne\BaseFactory;
 use Venne\System\Components\AdminGrid\AdminGrid;
 use Venne\System\Content\Repositories\PageRepository;
-use Venne\BaseFactory;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
@@ -27,7 +27,6 @@ class ContentTableFactory extends BaseFactory
 	/** @var PageRepository */
 	protected $pageRepository;
 
-
 	/**
 	 * @param PageRepository $pageRepository
 	 */
@@ -35,7 +34,6 @@ class ContentTableFactory extends BaseFactory
 	{
 		$this->pageRepository = $pageRepository;
 	}
-
 
 	/**
 	 * @return AdminGrid

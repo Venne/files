@@ -13,27 +13,24 @@ namespace Venne\Files\SideComponents;
 
 use Kdyby\Doctrine\EntityDao;
 use Nette\Http\Session;
-use Nette\Http\SessionSection;
-use Venne\System\UI\Control;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class FilesControl extends Control
+class FilesControl extends \Venne\System\UI\Control
 {
 
-	/** @var SessionSection */
+	/** @var \Nette\Http\SessionSection */
 	private $session;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	private $dirDao;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	private $fileDao;
 
-	/** @var IBrowserControlFactory */
+	/** @var \Venne\Files\SideComponents\IBrowserControlFactory */
 	private $browserFactory;
-
 
 	public function __construct(EntityDao $dirRepository, EntityDao $fileRepository, Session $session, IBrowserControlFactory $browserFactory)
 	{
@@ -45,13 +42,15 @@ class FilesControl extends Control
 		$this->browserFactory = $browserFactory;
 	}
 
-
 	public function render()
 	{
 		$this->template->render();
 	}
 
-
+	/**
+	 * @param int $id
+	 * @param bool $state
+	 */
 	public function setState($id, $state)
 	{
 		if (!isset($this->session->state)) {
@@ -61,13 +60,18 @@ class FilesControl extends Control
 		$this->session->state[$id] = $state;
 	}
 
-
+	/**
+	 * @param int $id
+	 * @return bool
+	 */
 	public function getState($id)
 	{
-		return isset($this->session->state[$id]) ? $this->session->state[$id] : FALSE;
+		return isset($this->session->state[$id]) ? $this->session->state[$id] : false;
 	}
 
-
+	/**
+	 * @return \Venne\Files\SideComponents\BrowserControl
+	 */
 	protected function createComponentBrowser()
 	{
 		$browser = $this->browserFactory->create();
@@ -83,19 +87,25 @@ class FilesControl extends Control
 		return $browser;
 	}
 
-
+	/**
+	 * @param string $key
+	 * @param string $open
+	 */
 	public function fileExpand($key, $open)
 	{
-		$key = $key ? substr($key, 2) : NULL;
-		$this->setState((int)$key, $open);
+		$key = $key ? substr($key, 2) : null;
+		$this->setState((int) $key, $open);
 	}
 
-
-	public function getFiles($parent = NULL)
+	/**
+	 * @param string $parent
+	 * @return mixed[]
+	 */
+	public function getFiles($parent = null)
 	{
-		$parent = $parent ? substr($parent, 2) : NULL;
+		$parent = $parent ? substr($parent, 2) : null;
 
-		$this->setState((int)$parent, TRUE);
+		$this->setState((int) $parent, true);
 
 		$data = array();
 
@@ -106,19 +116,19 @@ class FilesControl extends Control
 		} else {
 			$dql = $dql->andWhere('a.parent IS NULL');
 		}
-		$dql = $dql->andWhere('a.invisible = :invisible')->setParameter('invisible', FALSE);
+		$dql = $dql->andWhere('a.invisible = :invisible')->setParameter('invisible', false);
 
 		foreach ($dql->getQuery()->getResult() as $page) {
 			$item = array('title' => $page->name, 'key' => 'd:' . $page->id);
 
-			$item['isFolder'] = TRUE;
+			$item['isFolder'] = true;
 
 			if (count($page->children) > 0 || count($page->files) > 0) {
-				$item['isLazy'] = TRUE;
+				$item['isLazy'] = true;
 			}
 
 			if ($this->getState($page->id)) {
-				$item['expand'] = TRUE;
+				$item['expand'] = true;
 				$item['children'] = $this->getFiles('d:' . $page->id);
 			}
 
@@ -132,7 +142,7 @@ class FilesControl extends Control
 		} else {
 			$dql = $dql->andWhere('a.parent IS NULL');
 		}
-		$dql = $dql->andWhere('a.invisible = :invisible')->setParameter('invisible', FALSE);
+		$dql = $dql->andWhere('a.invisible = :invisible')->setParameter('invisible', false);
 
 		foreach ($dql->getQuery()->getResult() as $page) {
 			$item = array('title' => $page->name, 'key' => 'f:' . $page->id);
@@ -142,7 +152,11 @@ class FilesControl extends Control
 		return $data;
 	}
 
-
+	/**
+	 * @param string $from
+	 * @param string $to
+	 * @param string $dropmode
+	 */
 	public function setFileParent($from, $to, $dropmode)
 	{
 		$fromType = substr($from, 0, 1);

@@ -12,20 +12,19 @@
 namespace Venne\Files\SideComponents;
 
 use Nette\Application\Responses\JsonResponse;
-use Nette\Callback;
 use Nette\InvalidArgumentException;
-use Venne\System\UI\Control;
+use Nette\Utils\Callback;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class BrowserControl extends Control
+class BrowserControl extends \Venne\System\UI\Control
 {
 
 	/** @var callable */
 	public $onExpand;
 
-	/** @var array */
+	/** @var callable */
 	public $onClick;
 
 	/** @var callable */
@@ -34,11 +33,9 @@ class BrowserControl extends Control
 	/** @var callable */
 	protected $dropCallback;
 
-
 	/**
-	 * @param $name
-	 * @param $callback
-	 * @throws InvalidArgumentException
+	 * @param string $name
+	 * @param callable $callback
 	 */
 	public function addContentMenu($name, $callback)
 	{
@@ -46,9 +43,8 @@ class BrowserControl extends Control
 			throw new InvalidArgumentException("Content menu '$name' is already exists.");
 		}
 
-		$this->contentMenu[$name] = Callback::create($callback);
+		$this->contentMenu[$name] = Callback::closure($callback);
 	}
-
 
 	/**
 	 * @param callable $dropCallback
@@ -58,7 +54,6 @@ class BrowserControl extends Control
 		$this->dropCallback = $dropCallback;
 	}
 
-
 	/**
 	 * @return callable
 	 */
@@ -66,7 +61,6 @@ class BrowserControl extends Control
 	{
 		return $this->dropCallback;
 	}
-
 
 	/**
 	 * @param callable $loadCallback
@@ -76,7 +70,6 @@ class BrowserControl extends Control
 		$this->loadCallback = $loadCallback;
 	}
 
-
 	/**
 	 * @return callable
 	 */
@@ -85,37 +78,50 @@ class BrowserControl extends Control
 		return $this->loadCallback;
 	}
 
-
+	/**
+	 * @param int $key
+	 */
 	public function handleClick($key)
 	{
 		$this->onClick($key);
 	}
-
 
 	public function render()
 	{
 		$this->template->render();
 	}
 
-
-	public function getPages($parent = NULL)
+	/**
+	 * @param int|null $parent
+	 * @return mixed
+	 */
+	public function getPages($parent = null)
 	{
-		return Callback::create($this->loadCallback)->invoke($parent);
+		return Callback::invoke($this->loadCallback, $parent);
 	}
 
-
-	public function handleGetPages($parent = NULL)
+	/**
+	 * @param int|null $parent
+	 */
+	public function handleGetPages($parent = null)
 	{
 		$this->getPresenter()->sendResponse(new JsonResponse($this->getPages($parent)));
 	}
 
-
-	public function handleSetParent($from = NULL, $to = NULL, $dropmode = NULL)
+	/**
+	 * @param int $from
+	 * @param int $to
+	 * @param string $dropmode
+	 */
+	public function handleSetParent($from = null, $to = null, $dropmode = null)
 	{
-		Callback::create($this->dropCallback)->invoke($from, $to, $dropmode);
+		Callback::invokeArgs($this->dropCallback, array($from, $to, $dropmode));
 	}
 
-
+	/**
+	 * @param int $key
+	 * @param string $open
+	 */
 	public function handleExpand($key, $open)
 	{
 		$this->onExpand($key, $open === 'true');

@@ -23,47 +23,49 @@ use Venne\Files\FileEntity;
 use Venne\Files\FileFormFactory;
 use Venne\Files\IAjaxFileUploaderControlFactory;
 use Venne\System\Components\AdminGrid\IAdminGridFactory;
-use Venne\System\UI\Control;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class FileBrowserControl extends Control
+class FileBrowserControl extends \Venne\System\UI\Control
 {
 
-	/** @persistent */
+	/**
+	 * @int
+	 *
+	 * @persistent
+	 */
 	public $key;
 
 	/** @var bool */
-	private $browserMode = FALSE;
+	private $browserMode = false;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	private $dirDao;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	private $fileDao;
 
-	/** @var DirFormFactory */
+	/** @var \Venne\Files\DirFormFactory */
 	private $dirFormFactory;
 
-	/** @var FileFormFactory */
+	/** @var \Venne\Files\FileFormFactory */
 	private $fileFormFactory;
 
-	/** @var FileEditFormFactory */
+	/** @var \Venne\Files\FileEditFormFactory */
 	private $fileEditFormFactory;
 
-	/** @var IAjaxFileUploaderControlFactory */
+	/** @var \Venne\Files\IAjaxFileUploaderControlFactory */
 	private $ajaxFileUploaderFactory;
 
-	/** @var DirEntity|NULL */
+	/** @var \Venne\Files\DirEntity|null */
 	private $root;
 
-	/** @var IAdminGridFactory */
+	/** @var \Venne\System\Components\AdminGrid\IAdminGridFactory */
 	private $adminGridFactory;
 
-	/** @var User */
+	/** @var \Nette\Security\User */
 	private $user;
-
 
 	public function __construct(
 		EntityDao $fileDao,
@@ -86,43 +88,41 @@ class FileBrowserControl extends Control
 		$this->user = $user;
 	}
 
-
 	/**
-	 * @param DirEntity|NULL $root
+	 * @param \Venne\Files\DirEntity|null $root
 	 */
-	public function setRoot(DirEntity $root = NULL)
+	public function setRoot(DirEntity $root = null)
 	{
 		$this->root = $root;
 	}
 
-
 	/**
-	 * @return DirEntity|NULL
+	 * @return \Venne\Files\DirEntity|null
 	 */
 	public function getRoot()
 	{
 		return $this->root;
 	}
 
-
 	/**
-	 * @param boolean $browserMode
+	 * @param bool $browserMode
 	 */
 	public function setBrowserMode($browserMode)
 	{
-		$this->browserMode = $browserMode;
+		$this->browserMode = (bool) $browserMode;
 	}
 
-
 	/**
-	 * @return boolean
+	 * @return bool
 	 */
 	public function getBrowserMode()
 	{
 		return $this->browserMode;
 	}
 
-
+	/**
+	 * @param \Nette\ComponentModel\IComponent $presenter
+	 */
 	protected function attached($presenter)
 	{
 		parent::attached($presenter);
@@ -139,11 +139,10 @@ class FileBrowserControl extends Control
 			throw new BadRequestException;
 		}
 
-		if ($this->presenter->getParameter('do') === NULL && $this->presenter->isAjax()) {
+		if ($this->presenter->getParameter('do') === null && $this->presenter->isAjax()) {
 			$this->redrawControl('content');
 		}
 	}
-
 
 	/**
 	 * @return bool
@@ -153,32 +152,33 @@ class FileBrowserControl extends Control
 		if ($this->root) {
 			if ($this->key) {
 				$entity = $this->getCurrentDir();
-				$t = FALSE;
+				$t = false;
 				while ($entity) {
 					if ($entity->id === $this->root->id) {
-						$t = TRUE;
+						$t = true;
 						break;
 					}
 					$entity = $entity->parent;
 				}
 
 				if (!$t) {
-					return FALSE;
+					return false;
 				}
 			} else {
-				return FALSE;
+				return false;
 			}
 		}
 
-		return TRUE;
+		return true;
 	}
 
-
+	/**
+	 * @param int $id
+	 */
 	public function handleChangeDir($id)
 	{
 		$this->redirect('this', array('key' => $id));
 	}
-
 
 	protected function createComponentAjaxFileUploader()
 	{
@@ -198,27 +198,35 @@ class FileBrowserControl extends Control
 			}
 			$this->redrawControl('content');
 		};
+
 		return $control;
 	}
 
-
+	/**
+	 * @param \Venne\Files\AjaxFileUploaderControl $control
+	 * @param string $fileName
+	 */
 	public function handleFileUpload(AjaxFileUploaderControl $control, $fileName)
 	{
-		/** @var FileEntity $fileEntity */
 		$fileEntity = new FileEntity;
 		$fileEntity->setFile(new \SplFileInfo($control->getAjaxDir() . '/' . $fileName));
 		$fileEntity->setParent($this->getCurrentDir());
 		$this->fileDao->save($fileEntity);
 	}
 
-
+	/**
+	 * @param \Venne\Files\AjaxFileUploaderControl $control
+	 * @param string $fileName
+	 */
 	public function handleFileUploadUnlink(AjaxFileUploaderControl $control, $fileName)
 	{
 		@unlink($control->getAjaxDir() . '/' . $fileName);
 		@unlink($control->getAjaxDir() . '/thumbnail/' . $fileName);
 	}
 
-
+	/**
+	 * @return \Venne\System\Components\AdminGrid\AdminGrid
+	 */
 	protected function createComponentTable()
 	{
 		$admin = $this->createTable();
@@ -229,9 +237,9 @@ class FileBrowserControl extends Control
 		$table = $admin->getTable();
 
 		$qb = $this->dirDao->createQueryBuilder('a')
-			->andWhere('a.invisible = :invisible')->setParameter('invisible', FALSE);
+			->andWhere('a.invisible = :invisible')->setParameter('invisible', false);
 
-		if ($this->key === NULL) {
+		if ($this->key === null) {
 			$qb->andWhere('a.parent IS NULL');
 		} else {
 			$qb->andWhere('a.parent = :par')->setParameter('par', $this->key);
@@ -255,11 +263,13 @@ class FileBrowserControl extends Control
 		$form = $admin->createForm($this->fileFormFactory, 'File', function () {
 			$entity = new FileEntity;
 			$entity->setParent($this->getCurrentDir());
+
 			return $entity;
 		});
 		$dirForm = $admin->createForm($this->dirFormFactory, 'Directory', function () {
 			$entity = new DirEntity;
 			$entity->setParent($this->getCurrentDir());
+
 			return $entity;
 		});
 
@@ -280,14 +290,16 @@ class FileBrowserControl extends Control
 				->setIcon('arrow-up')
 				->onClick[] = function () {
 				$dir = $this->getCurrentDir();
-				$this->redirect('this', array('key' => $dir->parent ? $dir->parent->id : NULL));
+				$this->redirect('this', array('key' => $dir->parent ? $dir->parent->id : null));
 			};
 		}
 
 		return $admin;
 	}
 
-
+	/**
+	 * @return \Venne\System\Components\AdminGrid\AdminGrid
+	 */
 	protected function createComponentFileTable()
 	{
 		$admin = $this->createTable();
@@ -297,9 +309,9 @@ class FileBrowserControl extends Control
 		$table = $admin->getTable();
 
 		$qb = $this->fileDao->createQueryBuilder('a')
-			->andWhere('a.invisible = :invisible')->setParameter('invisible', FALSE);
+			->andWhere('a.invisible = :invisible')->setParameter('invisible', false);
 
-		if ($this->key === NULL) {
+		if ($this->key === null) {
 			$qb->andWhere('a.parent IS NULL');
 		} else {
 			$qb->andWhere('a.parent = :par')->setParameter('par', $this->key);
@@ -321,7 +333,9 @@ class FileBrowserControl extends Control
 		return $admin;
 	}
 
-
+	/**
+	 * @return \Venne\System\Components\AdminGrid\AdminGrid
+	 */
 	protected function createTable()
 	{
 		$admin = $this->adminGridFactory->create($this->fileDao);
@@ -330,16 +344,16 @@ class FileBrowserControl extends Control
 		$table->addColumnText('name', 'Name');
 
 		$table->setDefaultPerPage(99999999999);
+
 		return $admin;
 	}
 
-
 	/**
-	 * @return null|DirEntity
+	 * @return DirEntity|null
 	 */
 	public function getCurrentDir()
 	{
-		return $this->key ? $this->dirDao->find($this->key) : NULL;
+		return $this->key ? $this->dirDao->find($this->key) : null;
 	}
 
 }

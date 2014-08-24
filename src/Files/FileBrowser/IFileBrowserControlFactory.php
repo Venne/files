@@ -18,7 +18,7 @@ interface IFileBrowserControlFactory
 {
 
 	/**
-	 * @return FileBrowserControl
+	 * @return \Venne\Files\FileBrowser\FileBrowserControl
 	 */
 	public function create();
 

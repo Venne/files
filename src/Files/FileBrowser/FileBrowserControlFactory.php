@@ -12,9 +12,9 @@
 namespace Venne\Files\FileBrowser;
 
 use Kdyby\Doctrine\EntityDao;
-use Venne\Files\AjaxFileUploaderControlFactory;
 use Venne\Files\DirFormFactory;
 use Venne\Files\FileFormFactory;
+use Venne\Files\IAjaxFileUploaderControlFactory;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
@@ -25,40 +25,27 @@ class FileBrowserControlFactory
 	/** @var string */
 	protected $filePath;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	protected $dirDao;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	protected $fileDao;
 
-	/** @var DirFormFactory */
+	/** @var \Venne\Files\DirFormFactory */
 	protected $dirFormFactory;
 
-	/** @var FileFormFactory */
+	/** @var \Venne\Files\FileFormFactory */
 	protected $fileFormFactory;
 
-	/** @var AjaxFileUploaderControlFactory */
+	/** @var \Venne\Files\IAjaxFileUploaderControlFactory */
 	protected $ajaxFileUploaderFactory;
 
-	/** @var FileControlFactory */
-	protected $fileControlFactory;
-
-
-	/**
-	 * @param EntityDao $fileDao
-	 * @param EntityDao $dirDao
-	 * @param FileControlFactory $fileControlFactory
-	 * @param FileFormFactory $fileForm
-	 * @param DirFormFactory $dirForm
-	 * @param AjaxFileUploaderControlFactory $ajaxFileUploaderFactory
-	 */
 	public function __construct(
 		EntityDao $fileDao,
 		EntityDao $dirDao,
-		FileControlFactory $fileControlFactory,
 		FileFormFactory $fileForm,
 		DirFormFactory $dirForm,
-		AjaxFileUploaderControlFactory $ajaxFileUploaderFactory
+		IAjaxFileUploaderControlFactory $ajaxFileUploaderFactory
 	)
 	{
 		$this->fileControlFactory = $fileControlFactory;
@@ -69,20 +56,19 @@ class FileBrowserControlFactory
 		$this->ajaxFileUploaderFactory = $ajaxFileUploaderFactory;
 	}
 
-
 	/**
-	 * @return FileBrowserControl
+	 * @return \Venne\Files\FileBrowser\FileBrowserControl
 	 */
 	public function create()
 	{
 		$control = new FileBrowserControl(
-			$this->fileControlFactory,
 			$this->fileDao,
 			$this->dirDao,
 			$this->fileFormFactory,
 			$this->dirFormFactory,
 			$this->ajaxFileUploaderFactory
 		);
+
 		return $control;
 	}
 

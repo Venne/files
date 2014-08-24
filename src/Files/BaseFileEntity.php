@@ -11,37 +11,39 @@
 
 namespace Venne\Files;
 
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
-use Kdyby\Doctrine\Entities\BaseEntity;
 use Nette\Security\User;
 use Nette\Utils\Strings;
-use Venne\Doctrine\Entities\IdentifiedEntityTrait;
 use Venne\Security\RoleEntity;
 use Venne\Security\UserEntity;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class BaseFileEntity extends BaseEntity
+class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 {
 
-	use IdentifiedEntityTrait;
+	use \Venne\Doctrine\Entities\IdentifiedEntityTrait;
 
 	/**
 	 * @var string
+	 *
 	 * @ORM\Column(type="string")
 	 */
 	protected $name = '';
 
 	/**
 	 * @var string
+	 *
 	 * @ORM\Column(type="string")
 	 */
 	protected $path;
 
 	/**
 	 * @var DirEntity
+	 *
 	 * @ORM\ManyToOne(targetEntity="DirEntity", inversedBy="children")
 	 * @ORM\JoinColumn(name="parent_id", referencedColumnName="id", onDelete="CASCADE")
 	 */
@@ -49,44 +51,51 @@ class BaseFileEntity extends BaseEntity
 
 	/**
 	 * @var bool
+	 *
 	 * @ORM\Column(type="boolean")
 	 */
-	protected $invisible = FALSE;
+	protected $invisible = false;
 
 	/**
 	 * @var bool
+	 *
 	 * @ORM\Column(type="boolean")
 	 */
-	protected $protected = FALSE;
+	protected $protected = false;
 
 	/**
 	 * @var \DateTime
+	 *
 	 * @ORM\Column(type="datetime")
 	 */
 	protected $created;
 
 	/**
 	 * @var \DateTime
+	 *
 	 * @ORM\Column(type="datetime")
 	 */
 	protected $updated;
 
 	/**
-	 * @var UserEntity
+	 * @var \Venne\Security\UserEntity
+	 *
 	 * @ORM\ManyToOne(targetEntity="\Venne\Security\UserEntity")
 	 * @ORM\JoinColumn(onDelete="SET NULL")
 	 */
 	protected $author;
 
 	/**
-	 * @var RoleEntity[]|ArrayCollection
+	 * @var \Venne\Security\RoleEntity[]|\Doctrine\Common\Collections\ArrayCollection
+	 *
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="file_read")
 	 **/
 	protected $read;
 
 	/**
-	 * @var RoleEntity[]|ArrayCollection
+	 * @var \Venne\Security\RoleEntity[]|\Doctrine\Common\Collections\ArrayCollection
+	 *
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="file_write")
 	 **/
@@ -101,7 +110,7 @@ class BaseFileEntity extends BaseEntity
 	/** @var string */
 	protected $publicUrl;
 
-	/** @var User */
+	/** @var \Nette\Security\User */
 	protected $user;
 
 	/** @var string */
@@ -116,24 +125,22 @@ class BaseFileEntity extends BaseEntity
 	/** @var bool */
 	private $_isAllowedToRead;
 
-
 	public function __construct()
 	{
-		$this->created = new \DateTime;
-		$this->updated = new \DateTime;
-		$this->read = new ArrayCollection;
-		$this->write = new ArrayCollection;
+		$this->created = new DateTime();
+		$this->updated = new DateTime();
+		$this->read = new ArrayCollection();
+		$this->write = new ArrayCollection();
 	}
 
-
 	/**
-	 * @param BaseFileEntity $parent
+	 * @param BaseFileEntity|null $parent
 	 */
-	public function copyPermission(BaseFileEntity $parent = NULL)
+	public function copyPermission(BaseFileEntity $parent = null)
 	{
-		$parent = $parent ? : $this->parent;
+		$parent = $parent ?: $this->parent;
 
-		if ($parent === NULL) {
+		if ($parent === null) {
 			return;
 		}
 
@@ -154,14 +161,12 @@ class BaseFileEntity extends BaseEntity
 		}
 	}
 
-
 	/**
-	 * @param $name
-	 * @throws \Venne\System\Content\PermissionDeniedException
+	 * @param string $name
 	 */
 	public function setName($name)
 	{
-		if ($this->name == $name) {
+		if ($this->name === $name) {
 			return;
 		}
 
@@ -171,13 +176,11 @@ class BaseFileEntity extends BaseEntity
 
 		$this->name = $name;
 		$this->generatePath();
-		$this->updated = new \DateTime;
+		$this->updated = new DateTime;
 	}
-
 
 	/**
 	 * @return string
-	 * @throws PermissionDeniedException
 	 */
 	public function getName()
 	{
@@ -188,14 +191,12 @@ class BaseFileEntity extends BaseEntity
 		return $this->name;
 	}
 
-
 	/**
-	 * @param DirEntity $parent
-	 * @throws PermissionDeniedException
+	 * @param \Venne\Files\DirEntity|null $parent
 	 */
-	public function setParent(DirEntity $parent = NULL)
+	public function setParent(DirEntity $parent = null)
 	{
-		if ($this->parent == $parent) {
+		if ($this->parent === $parent) {
 			return;
 		}
 
@@ -207,10 +208,8 @@ class BaseFileEntity extends BaseEntity
 		$this->generatePath();
 	}
 
-
 	/**
-	 * @return DirEntity
-	 * @throws PermissionDeniedException
+	 * @return \Venne\Files\DirEntity|null
 	 */
 	public function getParent()
 	{
@@ -221,10 +220,14 @@ class BaseFileEntity extends BaseEntity
 		return $this->parent;
 	}
 
-
+	/**
+	 * @param bool $invisible
+	 */
 	public function setInvisible($invisible)
 	{
-		if ($this->invisible == $invisible) {
+		$invisible = (bool) $invisible;
+
+		if ($this->invisible === $invisible) {
 			return;
 		}
 
@@ -233,13 +236,11 @@ class BaseFileEntity extends BaseEntity
 		}
 
 		$this->invisible = $invisible;
-		$this->updated = new \DateTime;
+		$this->updated = new DateTime;
 	}
-
 
 	/**
 	 * @return bool
-	 * @throws PermissionDeniedException
 	 */
 	public function getInvisible()
 	{
@@ -250,14 +251,14 @@ class BaseFileEntity extends BaseEntity
 		return $this->invisible;
 	}
 
-
 	/**
-	 * @param $protected
-	 * @throws PermissionDeniedException
+	 * @param bool $protected
 	 */
 	public function setProtected($protected)
 	{
-		if ($this->protected == $protected) {
+		$protected = (bool) $protected;
+
+		if ($this->protected === $protected) {
 			return;
 		}
 
@@ -265,17 +266,15 @@ class BaseFileEntity extends BaseEntity
 			throw new PermissionDeniedException;
 		}
 
-		if ($this->_oldProtected === NULL) {
+		if ($this->_oldProtected === null) {
 			$this->_oldProtected = $this->protected;
 		}
 
 		$this->protected = $protected;
 	}
 
-
 	/**
 	 * @return bool
-	 * @throws PermissionDeniedException
 	 */
 	public function getProtected()
 	{
@@ -286,28 +285,20 @@ class BaseFileEntity extends BaseEntity
 		return $this->protected;
 	}
 
-
 	/**
-	 * @param $read
-	 * @throws PermissionDeniedException
+	 * @param \Venne\Security\RoleEntity $read
 	 */
-	public function setRead($read)
+	public function addRead(RoleEntity $read)
 	{
-		if ((array)$this->read == (array)$read) {
-			return;
-		}
-
 		if (!$this->isAllowedToWrite()) {
 			throw new PermissionDeniedException;
 		}
 
-		$this->read = $read;
+		$this->read->add($read);
 	}
 
-
 	/**
-	 * @return ArrayCollection|\Venne\Security\RoleEntity[]
-	 * @throws PermissionDeniedException
+	 * @return \Venne\Security\RoleEntity[]
 	 */
 	public function getRead()
 	{
@@ -315,31 +306,23 @@ class BaseFileEntity extends BaseEntity
 			throw new PermissionDeniedException;
 		}
 
-		return $this->read;
+		return $this->read->toArray();
 	}
 
-
 	/**
-	 * @param $write
-	 * @throws PermissionDeniedException
+	 * @param \Venne\Security\RoleEntity $write
 	 */
-	public function setWrite($write)
+	public function addWrite(RoleEntity $write)
 	{
-		if ((array)$this->write == (array)$write) {
-			return;
-		}
-
 		if (!$this->isAllowedToWrite()) {
 			throw new PermissionDeniedException;
 		}
 
-		$this->write = $write;
+		$this->write->add($write);
 	}
 
-
 	/**
-	 * @return ArrayCollection|\Venne\Security\RoleEntity[]
-	 * @throws PermissionDeniedException
+	 * @return \Venne\Security\RoleEntity[]
 	 */
 	public function getWrite()
 	{
@@ -347,13 +330,11 @@ class BaseFileEntity extends BaseEntity
 			throw new PermissionDeniedException;
 		}
 
-		return $this->write;
+		return $this->write->toArray();
 	}
-
 
 	/**
 	 * @return string
-	 * @throws PermissionDeniedException
 	 */
 	public function getPath()
 	{
@@ -364,9 +345,8 @@ class BaseFileEntity extends BaseEntity
 		return $this->path;
 	}
 
-
 	/**
-	 * @throws PermissionDeniedException
+	 * @internal
 	 */
 	public function generatePath()
 	{
@@ -380,7 +360,7 @@ class BaseFileEntity extends BaseEntity
 			$this->parent->__load();
 		}
 
-		$this->path = ($this->parent ? $this->parent->path . '/' : '') . Strings::webalize($this->name, '.', FALSE);
+		$this->path = ($this->parent ? $this->parent->path . '/' : '') . Strings::webalize($this->name, '.', false);
 
 		if ($this->path == $old) {
 			return;
@@ -390,7 +370,7 @@ class BaseFileEntity extends BaseEntity
 			if (!$this->_oldPath && $old != $this->path) {
 				$this->_oldPath = $old;
 			} else if ($this->_oldPath && $this->_oldPath == $this->path) {
-				$this->_oldPath = NULL;
+				$this->_oldPath = null;
 			}
 		}
 	}
@@ -404,15 +384,15 @@ class BaseFileEntity extends BaseEntity
 	public function setProtectedDir($protectedDir)
 	{
 		$this->protectedDir = $protectedDir;
-		$this->updated = new \DateTime;
 	}
 
-
+	/**
+	 * @param string $publicDir
+	 */
 	public function setPublicDir($publicDir)
 	{
 		$this->publicDir = $publicDir;
 	}
-
 
 	/**
 	 * @param string $publicUrl
@@ -421,7 +401,6 @@ class BaseFileEntity extends BaseEntity
 	{
 		$this->publicUrl = $publicUrl;
 	}
-
 
 	/**
 	 * @param \Nette\Security\User $user
@@ -432,22 +411,20 @@ class BaseFileEntity extends BaseEntity
 			return;
 		}
 
-		if ($this->author === NULL && $user->identity instanceof UserEntity) {
+		if ($this->author === null && $user->identity instanceof UserEntity) {
 			$this->author = $user->identity;
 			$this->updated = new \DateTime;
 		}
 
 		$this->user = $user;
-		$this->_isAllowedToRead = NULL;
-		$this->_isAllowedToWrite = NULL;
+		$this->_isAllowedToRead = null;
+		$this->_isAllowedToWrite = null;
 	}
 
-
 	/**
-	 * @param UserEntity $author
-	 * @throws PermissionDeniedException
+	 * @param UserEntity|null $author
 	 */
-	public function setAuthor(UserEntity $author = NULL)
+	public function setAuthor(UserEntity $author = null)
 	{
 		if ($this->author === $author) {
 			return;
@@ -461,10 +438,8 @@ class BaseFileEntity extends BaseEntity
 		$this->updated = new \DateTime;
 	}
 
-
 	/**
-	 * @return UserEntity
-	 * @throws PermissionDeniedException
+	 * @return \Venne\Security\UserEntity
 	 */
 	public function getAuthor()
 	{
@@ -475,10 +450,8 @@ class BaseFileEntity extends BaseEntity
 		return $this->author;
 	}
 
-
 	/**
 	 * @return \DateTime
-	 * @throws PermissionDeniedException
 	 */
 	public function getCreated()
 	{
@@ -489,10 +462,8 @@ class BaseFileEntity extends BaseEntity
 		return $this->created;
 	}
 
-
 	/**
 	 * @return \DateTime
-	 * @throws PermissionDeniedException
 	 */
 	public function getUpdated()
 	{
@@ -503,23 +474,22 @@ class BaseFileEntity extends BaseEntity
 		return $this->updated;
 	}
 
-
 	/**
 	 * @return bool
 	 */
 	public function isAllowedToRead()
 	{
-		if ($this->_isAllowedToRead === NULL) {
-			$this->_isAllowedToRead = FALSE;
+		if ($this->_isAllowedToRead === null) {
+			$this->_isAllowedToRead = false;
 
 			if (!$this->protected) {
-				$this->_isAllowedToRead = TRUE;
+				$this->_isAllowedToRead = true;
 			} else if ($this->user->isInRole('admin')) {
-				$this->_isAllowedToRead = TRUE;
+				$this->_isAllowedToRead = true;
 			} else {
 				foreach ($this->read as $role) {
 					if ($this->user->isInRole($role->getName())) {
-						$this->_isAllowedToRead = TRUE;
+						$this->_isAllowedToRead = true;
 					}
 				}
 			}
@@ -528,26 +498,25 @@ class BaseFileEntity extends BaseEntity
 		return $this->_isAllowedToRead;
 	}
 
-
 	/**
 	 * @return bool
 	 */
 	public function isAllowedToWrite()
 	{
-		if ($this->_isAllowedToWrite === NULL) {
-			$this->_isAllowedToWrite = FALSE;
+		if ($this->_isAllowedToWrite === null) {
+			$this->_isAllowedToWrite = false;
 
 			if (!$this->author) {
-				$this->_isAllowedToWrite = TRUE;
+				$this->_isAllowedToWrite = true;
 			} else if ($this->user) {
 				if ($this->author === $this->user->identity) {
-					$this->_isAllowedToWrite = TRUE;
+					$this->_isAllowedToWrite = true;
 				} else if ($this->user->isInRole('admin')) {
-					$this->_isAllowedToWrite = TRUE;
+					$this->_isAllowedToWrite = true;
 				} else {
 					foreach ($this->read as $role) {
 						if ($this->user->isInRole($role->getName())) {
-							$this->_isAllowedToWrite = TRUE;
+							$this->_isAllowedToWrite = true;
 						}
 					}
 				}

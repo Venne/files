@@ -12,25 +12,23 @@
 namespace Venne\Files;
 
 use Nette\Http\Session;
-use Nette\Http\SessionSection;
-use Venne\System\UI\Control;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class AjaxFileUploaderControl extends Control
+class AjaxFileUploaderControl extends \Venne\System\UI\Control
 {
 
-	/** @var array */
+	/** @var callable */
 	public $onFileUpload;
 
-	/** @var array */
+	/** @var callable */
 	public $onAfterFileUpload;
 
-	/** @var array */
+	/** @var callable */
 	public $onError;
 
-	/** @var array */
+	/** @var callable */
 	public $onSuccess;
 
 	/** @var string */
@@ -39,13 +37,17 @@ class AjaxFileUploaderControl extends Control
 	/** @var string */
 	protected $ajaxPath;
 
-	/** @var array */
+	/** @var string[] */
 	private $errors = array();
 
-	/** @var SessionSection */
+	/** @var \Nette\Http\SessionSection */
 	private $sessionSection;
 
-
+	/**
+	 * @param \Nette\ComponentModel\IContainer $ajaxDir
+	 * @param string $ajaxPath
+	 * @param \Nette\Http\Session $session
+	 */
 	public function __construct($ajaxDir, $ajaxPath, Session $session)
 	{
 		parent::__construct();
@@ -55,7 +57,6 @@ class AjaxFileUploaderControl extends Control
 		$this->sessionSection = $session->getSection('ajaxUploader-' . $this->getName());
 	}
 
-
 	/**
 	 * @return string
 	 */
@@ -63,7 +64,6 @@ class AjaxFileUploaderControl extends Control
 	{
 		return $this->ajaxDir;
 	}
-
 
 	/**
 	 * @return string
@@ -73,10 +73,10 @@ class AjaxFileUploaderControl extends Control
 		return $this->ajaxPath;
 	}
 
-
 	/**
-	 * @param $file
-	 * @param \Exception $e
+	 * @param string $class
+	 * @param string $message
+	 * @param int $code
 	 */
 	protected function addError($class, $message, $code)
 	{
@@ -91,15 +91,13 @@ class AjaxFileUploaderControl extends Control
 		);
 	}
 
-
 	protected function cleanErrors()
 	{
 		$this->sessionSection->errors = array();
 	}
 
-
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public function getErrors()
 	{
@@ -110,13 +108,12 @@ class AjaxFileUploaderControl extends Control
 		return $this->sessionSection->errors;
 	}
 
-
 	public function handleUpload()
 	{
 		$this->cleanErrors();
 
 		if (!file_exists($this->ajaxDir)) {
-			mkdir($this->ajaxDir, 0777, TRUE);
+			mkdir($this->ajaxDir, 0777, true);
 		}
 
 		if (!class_exists('\UploadHandler')) {
@@ -130,11 +127,11 @@ class AjaxFileUploaderControl extends Control
 			'script_url' => $this->ajaxPath . '/',
 
 		));
-		$data = json_decode(ob_get_clean(), TRUE);
+		$data = json_decode(ob_get_clean(), true);
 
 		foreach ($data['files'] as $file) {
 			//try {
-				$this->onFileUpload($this, $file['name']);
+			$this->onFileUpload($this, $file['name']);
 			//} catch (\Exception $e) {
 			//	$this->addError(get_class($e), $e->getMessage(), $e->getCode());
 			//}
@@ -149,7 +146,6 @@ class AjaxFileUploaderControl extends Control
 		$this->presenter->terminate();
 	}
 
-
 	public function handleSuccess()
 	{
 		if (count($this->getErrors())) {
@@ -158,4 +154,5 @@ class AjaxFileUploaderControl extends Control
 			$this->onSuccess($this);
 		}
 	}
+
 }

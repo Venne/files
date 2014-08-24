@@ -14,7 +14,6 @@ namespace Venne\Files\Listeners;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\PreFlushEventArgs;
 use Nette\DI\Container;
-use Nette\Security\User;
 use Venne\Files\BaseFileEntity;
 
 /**
@@ -23,7 +22,7 @@ use Venne\Files\BaseFileEntity;
 class FileListener
 {
 
-	/** @var Container|\SystemContainer */
+	/** @var \Nette\DI\Container|\SystemContainer */
 	private $container;
 
 	/** @var string */
@@ -35,10 +34,15 @@ class FileListener
 	/** @var string */
 	private $publicUrl;
 
-	/** @var User */
+	/** @var \Nette\Security\User */
 	private $_user;
 
-
+	/**
+	 * @param string $publicDir
+	 * @param string $protectedDir
+	 * @param string $wwwDir
+	 * @param \Nette\DI\Container $container
+	 */
 	public function __construct($publicDir, $protectedDir, $wwwDir, Container $container)
 	{
 		$this->container = $container;
@@ -57,12 +61,10 @@ class FileListener
 		$this->setup($entity);
 	}
 
-
 	public function postLoad(BaseFileEntity $entity, LifecycleEventArgs $args)
 	{
 		$this->setup($entity);
 	}
-
 
 	private function setup(BaseFileEntity $entity)
 	{
@@ -72,9 +74,8 @@ class FileListener
 		$entity->setUser($this->getUser());
 	}
 
-
 	/**
-	 * @return User
+	 * @return \Nette\Security\User
 	 */
 	private function getUser()
 	{

@@ -12,7 +12,6 @@
 namespace Venne\Files\AdminModule;
 
 use Kdyby\Doctrine\EntityDao;
-use Nette\Application\UI\Presenter;
 use Venne\Files\FileBrowser\IFileBrowserControlFactory;
 use Venne\System\AdminPresenterTrait;
 
@@ -21,20 +20,19 @@ use Venne\System\AdminPresenterTrait;
  *
  * @secured
  */
-class DefaultPresenter extends Presenter
+class DefaultPresenter extends \Nette\Application\UI\Presenter
 {
 
 	use AdminPresenterTrait;
 
-	/** @var IFileBrowserControlFactory */
+	/** @var \Venne\Files\FileBrowser\IFileBrowserControlFactory */
 	private $fileBrowserControlFactory;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	private $fileDao;
 
-	/** @var EntityDao */
+	/** @var \Kdyby\Doctrine\EntityDao */
 	private $dirDao;
-
 
 	public function __construct(
 		EntityDao $fileDao,
@@ -47,13 +45,15 @@ class DefaultPresenter extends Presenter
 		$this->fileDao = $dirDao;
 	}
 
-
+	/**
+	 * @return \Venne\Files\FileBrowser\FileBrowserControl
+	 */
 	public function createComponentFileBrowser()
 	{
 		$control = $this->fileBrowserControlFactory->create();
+
 		return $control;
 	}
-
 
 	/**
 	 * @secured(privilege="show")
@@ -62,14 +62,12 @@ class DefaultPresenter extends Presenter
 	{
 	}
 
-
 	/**
 	 * @secured
 	 */
 	public function actionCreate()
 	{
 	}
-
 
 	/**
 	 * @secured
@@ -78,7 +76,6 @@ class DefaultPresenter extends Presenter
 	{
 	}
 
-
 	/**
 	 * @secured
 	 */
@@ -86,8 +83,11 @@ class DefaultPresenter extends Presenter
 	{
 	}
 
-
 	/**
+	 * @param string $from
+	 * @param string $to
+	 * @param string $dropmode
+	 *
 	 * @secured(privilege="edit")
 	 */
 	public function handleSetParent($from, $to, $dropmode)
@@ -106,8 +106,8 @@ class DefaultPresenter extends Presenter
 
 		if ($dropmode == 'before' || $dropmode == 'after') {
 			$entity->setParent(
-				$target->parent ? : NULL,
-				TRUE,
+				$target->parent ?: null,
+				true,
 				$dropmode == 'after' ? $target : $target->previous
 			);
 		} else {
@@ -128,16 +128,17 @@ class DefaultPresenter extends Presenter
 		$this['panel']->redrawControl('content');
 	}
 
-
 	/**
+	 * @param string $key
+	 *
 	 * @secured(privilege="remove")
 	 */
-	public function handleDelete($key2)
+	public function handleDelete($key)
 	{
-		$dao = substr($key2, 0, 1) == 'd' ? $this->dirDao : $this->fileDao;
-		$dao->delete($dao->find(substr($key2, 2)));
+		$dao = substr($key, 0, 1) == 'd' ? $this->dirDao : $this->fileDao;
+		$dao->delete($dao->find(substr($key, 2)));
 
-		if (substr($key2, 0, 1) == 'd') {
+		if (substr($key, 0, 1) == 'd') {
 			$this->flashMessage($this->translator->translate('Directory has been deleted'), 'success');
 		} else {
 			$this->flashMessage($this->translator->translate('File has been deleted'), 'success');

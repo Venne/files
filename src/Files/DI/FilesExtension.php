@@ -11,35 +11,28 @@
 
 namespace Venne\Files\DI;
 
-use Kdyby\Doctrine\DI\IEntityProvider;
-use Kdyby\Translation\DI\ITranslationProvider;
 use Nette\Application\Routers\Route;
-use Nette\DI\CompilerExtension;
-use Nette\DI\ContainerBuilder;
 use Nette\DI\Statement;
-use Nette\PhpGenerator\PhpLiteral;
-use Venne\System\DI\IJsProvider;
-use Venne\System\DI\IPresenterProvider;
 use Venne\System\DI\SystemExtension;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class FilesExtension extends CompilerExtension implements IEntityProvider, IPresenterProvider, ITranslationProvider, IJsProvider
+class FilesExtension extends \Nette\DI\CompilerExtension
+	implements
+	\Kdyby\Doctrine\DI\IEntityProvider,
+	\Venne\System\DI\IPresenterProvider,
+	\Kdyby\Translation\DI\ITranslationProvider,
+	\Venne\System\DI\IJsProvider
 {
 
-	/** @var array */
+	/** @var string[] */
 	public $defaults = array(
 		'ajaxUploadDir' => '%publicDir%/ajaxFileUpload',
 		'publicDir' => '%publicDir%/media',
 		'protectedDir' => '%dataDir%/media',
 	);
 
-
-	/**
-	 * Processes configuration data. Intended to be overridden by descendant.
-	 * @return void
-	 */
 	public function loadConfiguration()
 	{
 		$container = $this->getContainerBuilder();
@@ -51,7 +44,7 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 				$container->expand('%publicDir%/ajaxFileUpload'),
 				$container->expand('%publicDir%')
 			))
-			->setInject(TRUE);
+			->setInject(true);
 
 		$container->getDefinition('nette.latteFactory')
 			->addSetup('Venne\Files\Macros\MediaMacro::install(?->getCompiler())', array('@self'));
@@ -72,15 +65,13 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 				$container->expand($container->parameters['wwwDir'])
 			));
 
-
-
 		$container->addDefinition($this->prefix('fileBrowserControlFactory'))
 			->setImplement('Venne\Files\FileBrowser\IFileBrowserControlFactory')
 			->setArguments(array(
 				new Statement('@doctrine.dao', array('Venne\Files\FileEntity')),
 				new Statement('@doctrine.dao', array('Venne\Files\DirEntity'))
 			))
-			->setInject(TRUE);
+			->setInject(true);
 
 		$container->addDefinition($this->prefix('defaultPresenter'))
 			->setClass('Venne\Files\AdminModule\DefaultPresenter')
@@ -110,8 +101,8 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 				'action' => 'image',
 				'url' => array(
 					Route::VALUE => '',
-					Route::FILTER_IN => NULL,
-					Route::FILTER_OUT => NULL,
+					Route::FILTER_IN => null,
+					Route::FILTER_OUT => null,
 				)
 			)
 		));
@@ -122,16 +113,16 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 				'action' => 'default',
 				'url' => array(
 					Route::VALUE => '',
-					Route::FILTER_IN => NULL,
-					Route::FILTER_OUT => NULL,
+					Route::FILTER_IN => null,
+					Route::FILTER_OUT => null,
 				)
 			)
 		));
 
 		$container->addDefinition($this->prefix('browserControlFactory'))
 			->setImplement('Venne\Files\SideComponents\IBrowserControlFactory')
-			->setArguments(array(NULL, NULL))
-			->setInject(TRUE);
+			->setArguments(array(null, null))
+			->setInject(true);
 
 		$container->addDefinition($this->prefix('filesControlFactory'))
 			->setImplement('Venne\Files\SideComponents\IFilesControlFactory')
@@ -139,7 +130,7 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 				new Statement('@doctrine.dao', array('Venne\Files\DirEntity')),
 				new Statement('@doctrine.dao', array('Venne\Files\FileEntity')),
 			))
-			->setInject(TRUE)
+			->setInject(true)
 			->addTag(SystemExtension::TAG_SIDE_COMPONENT, array(
 				'name' => 'Files',
 				'description' => 'Files',
@@ -149,9 +140,8 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 			));
 	}
 
-
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public function getEntityMappings()
 	{
@@ -160,9 +150,8 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 		);
 	}
 
-
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public function getPresenterMapping()
 	{
@@ -171,9 +160,8 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 		);
 	}
 
-
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public function getTranslationResources()
 	{
@@ -182,9 +170,8 @@ class FilesExtension extends CompilerExtension implements IEntityProvider, IPres
 		);
 	}
 
-
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public function getJsFiles()
 	{

@@ -18,7 +18,7 @@ interface IAjaxFileUploaderControlFactory
 {
 
 	/**
-	 * @return AjaxFileUploaderControl
+	 * @return \Venne\Files\AjaxFileUploaderControl
 	 */
 	public function create();
 
