@@ -45,10 +45,16 @@ class DefaultPresenter extends \Nette\Application\UI\Presenter
 		$this->fileDao = $dirDao;
 	}
 
+	public function handleChangeDir()
+	{
+		$this->redirect('this');
+		$this->redrawControl('content');
+	}
+
 	/**
 	 * @return \Venne\Files\FileBrowser\FileBrowserControl
 	 */
-	public function createComponentFileBrowser()
+	protected function createComponentFileBrowser()
 	{
 		$control = $this->fileBrowserControlFactory->create();
 

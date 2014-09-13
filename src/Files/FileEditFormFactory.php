@@ -41,17 +41,18 @@ class FileEditFormFactory implements \Venne\Forms\IFormFactory
 
 		$form->addGroup('Permissions');
 		$form->addSelect('author', 'Owner')
+			->setTranslator()
 			->setOption(IComponentMapper::ITEMS_TITLE, 'email');
 
-		$form->addMultiSelect('writes', 'Write')
+		$form->addMultiSelect('writeRoles', 'Write')
 			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
 		$form->addCheckbox('protected', 'Protected')
 			->addCondition($form::EQUAL, true)
 			->toggle('form-permissions');
 
-		$form->addGroup()->setOption('id', 'form-permissions');
-		$form->addMultiSelect('reads', 'Read')
+		$form->addGroup()->setOption('container', 'fieldset id=form-permissions');
+		$form->addMultiSelect('readRoles', 'Read')
 			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
 		$form->setCurrentGroup();

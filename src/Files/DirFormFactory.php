@@ -38,21 +38,16 @@ class DirFormFactory implements \Venne\Forms\IFormFactory
 		$form->addGroup();
 		$form->addText('name', 'Name');
 
-//		if ($form->data->id) {
-//			$form->addManyToOne('parent', 'Parent')
-//				->setCriteria(array('invisible' => FALSE))
-//				->setOrderBy(array('path' => 'ASC'));
-//		}
-
 		$form->addGroup('Permissions');
 		$form->addSelect('author', 'Owner')
+			->setTranslator()
 			->setOption(IComponentMapper::ITEMS_TITLE, 'email');
 
-		$form->addMultiSelect('writes', 'Write')
-			->setOption(IComponentMapper::ITEMS_TITLE, 'email');
+		$form->addMultiSelect('writeRoles', 'Write')
+			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
-		$form->addMultiSelect('reads', 'Read')
-			->setOption(IComponentMapper::ITEMS_TITLE, 'email');
+		$form->addMultiSelect('readRoles', 'Read')
+			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
 		$form->addCheckbox('protected', 'Protected');
 		$form->addCheckbox('recursively', 'Change recursively');

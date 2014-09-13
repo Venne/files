@@ -47,7 +47,7 @@ class DirEntity extends \Venne\Files\BaseFileEntity
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="dir_read")
 	 **/
-	protected $read;
+	protected $readRoles;
 
 	/**
 	 * @var \Venne\Security\RoleEntity[]
@@ -55,7 +55,7 @@ class DirEntity extends \Venne\Files\BaseFileEntity
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="dir_write")
 	 **/
-	protected $write;
+	protected $writeRoles;
 
 	public function __construct()
 	{

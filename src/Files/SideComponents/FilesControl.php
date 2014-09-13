@@ -79,7 +79,10 @@ class FilesControl extends \Venne\System\UI\Control
 		$browser->setDropCallback($this->setFileParent);
 		$browser->onClick[] = function ($key) {
 			if (substr($key, 0, 2) === 'd:') {
-				$this->getPresenter()->redirect(':Files:Admin:Default:', array('fileBrowser-key' => $key));
+				$this->getPresenter()->forward(':Files:Admin:Default:', array(
+					'fileBrowser-key' => substr($key, 2),
+					'do' => 'changeDir',
+				));
 			}
 		};
 		$browser->onExpand[] = $this->fileExpand;

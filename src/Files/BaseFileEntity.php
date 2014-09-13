@@ -78,7 +78,7 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 	protected $updated;
 
 	/**
-	 * @var \Venne\Security\UserEntity
+	 * @var \Venne\Security\UserEntity|null
 	 *
 	 * @ORM\ManyToOne(targetEntity="\Venne\Security\UserEntity")
 	 * @ORM\JoinColumn(onDelete="SET NULL")
@@ -91,7 +91,7 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="file_read")
 	 **/
-	protected $read;
+	protected $readRoles;
 
 	/**
 	 * @var \Venne\Security\RoleEntity[]|\Doctrine\Common\Collections\ArrayCollection
@@ -99,7 +99,7 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 	 * @ORM\ManyToMany(targetEntity="\Venne\Security\RoleEntity")
 	 * @ORM\JoinTable(name="file_write")
 	 **/
-	protected $write;
+	protected $writeRoles;
 
 	/** @var string */
 	protected $publicDir;
@@ -129,8 +129,8 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 	{
 		$this->created = new DateTime();
 		$this->updated = new DateTime();
-		$this->read = new ArrayCollection();
-		$this->write = new ArrayCollection();
+		$this->readRoles = new ArrayCollection();
+		$this->writeRoles = new ArrayCollection();
 	}
 
 	/**
@@ -149,15 +149,15 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 		}
 
 		$this->protected = $parent->protected;
-		$this->read->clear();
-		$this->write->clear();
+		$this->readRoles->clear();
+		$this->writeRoles->clear();
 
-		foreach ($parent->read as $role) {
-			$this->read->add($role);
+		foreach ($parent->readRoles as $role) {
+			$this->readRoles->add($role);
 		}
 
-		foreach ($parent->write as $role) {
-			$this->write->add($role);
+		foreach ($parent->writeRoles as $role) {
+			$this->writeRoles->add($role);
 		}
 	}
 
@@ -288,49 +288,49 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 	/**
 	 * @param \Venne\Security\RoleEntity $read
 	 */
-	public function addRead(RoleEntity $read)
+	public function addReadRole(RoleEntity $read)
 	{
 		if (!$this->isAllowedToWrite()) {
 			throw new PermissionDeniedException;
 		}
 
-		$this->read->add($read);
+		$this->readRoles->add($read);
 	}
 
 	/**
 	 * @return \Venne\Security\RoleEntity[]
 	 */
-	public function getRead()
+	public function getReadRoles()
 	{
 		if (!$this->isAllowedToRead()) {
 			throw new PermissionDeniedException;
 		}
 
-		return $this->read->toArray();
+		return $this->readRoles->toArray();
 	}
 
 	/**
 	 * @param \Venne\Security\RoleEntity $write
 	 */
-	public function addWrite(RoleEntity $write)
+	public function addWriteRole(RoleEntity $write)
 	{
 		if (!$this->isAllowedToWrite()) {
 			throw new PermissionDeniedException;
 		}
 
-		$this->write->add($write);
+		$this->writeRoles->add($write);
 	}
 
 	/**
 	 * @return \Venne\Security\RoleEntity[]
 	 */
-	public function getWrite()
+	public function getWriteRoles()
 	{
 		if (!$this->isAllowedToRead()) {
 			throw new PermissionDeniedException;
 		}
 
-		return $this->write->toArray();
+		return $this->writeRoles->toArray();
 	}
 
 	/**
@@ -487,7 +487,7 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 			} else if ($this->user->isInRole('admin')) {
 				$this->_isAllowedToRead = true;
 			} else {
-				foreach ($this->read as $role) {
+				foreach ($this->readRoles as $role) {
 					if ($this->user->isInRole($role->getName())) {
 						$this->_isAllowedToRead = true;
 					}
@@ -514,7 +514,7 @@ class BaseFileEntity extends \Kdyby\Doctrine\Entities\BaseEntity
 				} else if ($this->user->isInRole('admin')) {
 					$this->_isAllowedToWrite = true;
 				} else {
-					foreach ($this->read as $role) {
+					foreach ($this->readRoles as $role) {
 						if ($this->user->isInRole($role->getName())) {
 							$this->_isAllowedToWrite = true;
 						}

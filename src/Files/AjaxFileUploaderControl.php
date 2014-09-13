@@ -130,11 +130,11 @@ class AjaxFileUploaderControl extends \Venne\System\UI\Control
 		$data = json_decode(ob_get_clean(), true);
 
 		foreach ($data['files'] as $file) {
-			//try {
-			$this->onFileUpload($this, $file['name']);
-			//} catch (\Exception $e) {
-			//	$this->addError(get_class($e), $e->getMessage(), $e->getCode());
-			//}
+			try {
+				$this->onFileUpload($this, $file['name']);
+			} catch (\Exception $e) {
+				$this->addError(get_class($e), $e->getMessage(), $e->getCode());
+			}
 
 			try {
 				$this->onAfterFileUpload($this, $file['name']);
@@ -143,11 +143,6 @@ class AjaxFileUploaderControl extends \Venne\System\UI\Control
 			}
 		}
 
-		$this->presenter->terminate();
-	}
-
-	public function handleSuccess()
-	{
 		if (count($this->getErrors())) {
 			$this->onError($this);
 		} else {

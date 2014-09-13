@@ -36,25 +36,15 @@ class FileFormFactory implements \Venne\Forms\IFormFactory
 		$form = $this->formFactory->create();
 
 		$form->addGroup();
-//		if ($form->data->id) {
-//			$form->addText('name', 'Name')
-//				->addCondition($form::FILLED);
-//		} else {
 		$form->addUpload('file', 'File')
 			->addCondition($form::FILLED);
-//		}
-
-//		if ($form->data->id) {
-//			$form->addManyToOne('parent', 'Parent')
-//				->setCriteria(array('invisible' => FALSE))
-//				->setOrderBy(array('path' => 'ASC'));
-//		}
 
 		$form->addGroup('Permissions');
 		$form->addSelect('author', 'Owner')
+			->setTranslator()
 			->setOption(IComponentMapper::ITEMS_TITLE, 'email');
 
-		$form->addMultiSelect('writes', 'Write')
+		$form->addMultiSelect('writeRoles', 'Write')
 			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
 		$form->addCheckbox('protected', 'Protected')
@@ -62,7 +52,7 @@ class FileFormFactory implements \Venne\Forms\IFormFactory
 			->toggle('form-permissions');
 
 		$form->addGroup()->setOption('id', 'form-permissions');
-		$form->addMultiSelect('reads', 'Read')
+		$form->addMultiSelect('readRoles', 'Read')
 			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
 		$form->setCurrentGroup();

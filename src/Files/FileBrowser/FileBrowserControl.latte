@@ -34,20 +34,20 @@
 
 
 <ol class="breadcrumb">
-	{var $entity = $control->currentDir}
+	{var $entity = $dir}
 
 	{define breadcrumb}
-	{if $entity->parent && $entity->parent !== $control->root}{include #breadcrumb, entity=>$entity->parent, ok=>true}{/if}
-		<li{if $entity->id == $control->key} class="active"{/if}>
-			{if $entity->id != $control->key}<a class="ajax" href="{link this key=>$entity->id}">{/if}{$entity->name}{if $entity->id != $control->key}</a>{/if}
+	{if $entity->parent && $entity->parent !== $root}{include #breadcrumb, entity=>$entity->parent, ok=>true}{/if}
+		<li{if $entity === $dir} class="active"{/if}>
+			{if $entity !== $dir}<a class="ajax" href="{link this key => $entity->id}">{/if}{$entity->name}{if $entity !== $dir}</a>{/if}
 		</li>
 	{/define}
 
-	<li{if !$control->key} class="active"{/if}>
-		{if $control->key}<a class="ajax" href="{link this key=>NULL}">{/if}{_Root}{if $control->key}</a>{/if}
+	<li{if $dir !== null} class="active"{/if}>
+		{if $dir !== null}<a class="ajax" href="{link this key => NULL}">{/if}{_Root}{if $dir ? $dir->id : ''}</a>{/if}
 	</li>
 
-	{if $entity && $entity !== $control->root}{include #breadcrumb entity => $entity}{/if}
+	{if $entity && $entity !== $root}{include #breadcrumb entity => $entity}{/if}
 </ol>
 
 

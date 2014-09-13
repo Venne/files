@@ -14,6 +14,7 @@ namespace Venne\Files\FileBrowser;
 use Grido\DataSources\Doctrine;
 use Kdyby\Doctrine\EntityDao;
 use Nette\Application\BadRequestException;
+use Nette\Forms\Form;
 use Nette\Security\User;
 use Venne\Files\AjaxFileUploaderControl;
 use Venne\Files\DirEntity;
@@ -30,12 +31,8 @@ use Venne\System\Components\AdminGrid\IAdminGridFactory;
 class FileBrowserControl extends \Venne\System\UI\Control
 {
 
-	/**
-	 * @int
-	 *
-	 * @persistent
-	 */
-	public $key;
+	/** @var \Venne\Files\DirEntity|null */
+	private $dir;
 
 	/** @var bool */
 	private $browserMode = false;
@@ -45,6 +42,9 @@ class FileBrowserControl extends \Venne\System\UI\Control
 
 	/** @var \Kdyby\Doctrine\EntityDao */
 	private $fileDao;
+
+	/** @var \Kdyby\Doctrine\EntityDao */
+	private $userDao;
 
 	/** @var \Venne\Files\DirFormFactory */
 	private $dirFormFactory;
@@ -70,6 +70,7 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	public function __construct(
 		EntityDao $fileDao,
 		EntityDao $dirDao,
+		EntityDao $userDao,
 		FileFormFactory $fileForm,
 		FileEditFormFactory $fileEditFormFactory,
 		DirFormFactory $dirForm,
@@ -80,12 +81,20 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	{
 		$this->fileDao = $fileDao;
 		$this->dirDao = $dirDao;
+		$this->userDao = $userDao;
 		$this->fileFormFactory = $fileForm;
 		$this->fileEditFormFactory = $fileEditFormFactory;
 		$this->dirFormFactory = $dirForm;
 		$this->ajaxFileUploaderFactory = $ajaxFileUploaderFactory;
 		$this->adminGridFactory = $adminGridFactory;
 		$this->user = $user;
+	}
+
+	public function render()
+	{
+		$this->template->dir = $this->dir;
+		$this->template->root = $this->root;
+		parent::render();
 	}
 
 	/**
@@ -127,20 +136,8 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	{
 		parent::attached($presenter);
 
-		if (substr($this->key, 1, 1) == ':') {
-			$this->key = substr($this->key, 2);
-		}
-
-		if ($this->root && !$this->key) {
-			$this->key = $this->root->getId();
-		}
-
 		if (!$this->checkCurrentDir()) {
 			throw new BadRequestException;
-		}
-
-		if ($this->presenter->getParameter('do') === null && $this->presenter->isAjax()) {
-			$this->redrawControl('content');
 		}
 	}
 
@@ -150,8 +147,8 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	public function checkCurrentDir()
 	{
 		if ($this->root) {
-			if ($this->key) {
-				$entity = $this->getCurrentDir();
+			if ($this->dir) {
+				$entity = $this->dir;
 				$t = false;
 				while ($entity) {
 					if ($entity->id === $this->root->id) {
@@ -172,12 +169,10 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		return true;
 	}
 
-	/**
-	 * @param int $id
-	 */
-	public function handleChangeDir($id)
+	public function handleChangeDir()
 	{
-		$this->redirect('this', array('key' => $id));
+		$this->redirect('this');
+		$this->redrawControl('content');
 	}
 
 	protected function createComponentAjaxFileUploader()
@@ -186,6 +181,7 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$control->onFileUpload[] = $this->handleFileUpload;
 		$control->onAfterFileUpload[] = $this->handleFileUploadUnlink;
 		$control->onSuccess[] = function () {
+			$this->redirect('this');
 			$this->redrawControl('content');
 		};
 		$control->onError[] = function (AjaxFileUploaderControl $control) {
@@ -196,6 +192,8 @@ class FileBrowserControl extends \Venne\System\UI\Control
 					$this->flashMessage($e['message']);
 				}
 			}
+
+			$this->redirect('this');
 			$this->redrawControl('content');
 		};
 
@@ -209,8 +207,9 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	public function handleFileUpload(AjaxFileUploaderControl $control, $fileName)
 	{
 		$fileEntity = new FileEntity;
+		$fileEntity->setParent($this->dir);
 		$fileEntity->setFile(new \SplFileInfo($control->getAjaxDir() . '/' . $fileName));
-		$fileEntity->setParent($this->getCurrentDir());
+		$fileEntity->setAuthor($this->userDao->find($this->user->getIdentity()->getId()));
 		$this->fileDao->save($fileEntity);
 	}
 
@@ -230,51 +229,58 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	protected function createComponentTable()
 	{
 		$admin = $this->createTable();
-		$admin->onAttached[] = function ($admin) {
-			$admin->getTable()->setTemplateFile(__DIR__ . '/Grido.latte');
-		};
 		$admin->setDao($this->dirDao);
 		$table = $admin->getTable();
 
-		$qb = $this->dirDao->createQueryBuilder('a')
-			->andWhere('a.invisible = :invisible')->setParameter('invisible', false);
+		$admin->onRender[] = function () use ($table) {
+			$qb = $this->dirDao->createQueryBuilder('a')
+				->andWhere('a.invisible = :invisible')->setParameter('invisible', false);
 
-		if ($this->key === null) {
-			$qb->andWhere('a.parent IS NULL');
-		} else {
-			$qb->andWhere('a.parent = :par')->setParameter('par', $this->key);
-		}
+			if ($this->dir === null) {
+				$qb->andWhere('a.parent IS NULL');
+			} else {
+				$qb->andWhere('a.parent = :par')->setParameter('par', $this->dir->getId());
+			}
 
-		$table->setModel(new Doctrine($qb));
+			$table->setModel(new Doctrine($qb));
+		};
+
 		$table->setDefaultSort(array('name' => 'ASC'));
 
 		$action = $table->addActionEvent('open', 'Open');
 		$action->getElementPrototype()->class[] = 'ajax';
-		$action->onClick[] = function ($id) {
-			$this->redirect('this', array('key' => $id));
+		$action->onClick[] = function ($id) use ($table) {
+			$this->redirect('this', array(
+				'key' => $id
+			));
+
+			$this->redrawControl('content');
 		};
 
-		$table->addActionEvent('edit', 'Edit')
-			->getElementPrototype()->class[] = 'ajax';
-
-		$table->addActionEvent('delete', 'Delete')
-			->getElementPrototype()->class[] = 'ajax';
+		$action = $table->addActionEvent('edit', 'Edit');
+		$action->getElementPrototype()->class[] = 'ajax';
+		$action = $table->addActionEvent('delete', 'Delete');
+		$action->getElementPrototype()->class[] = 'ajax';
 
 		$form = $admin->createForm($this->fileFormFactory, 'File', function () {
 			$entity = new FileEntity;
-			$entity->setParent($this->getCurrentDir());
+			$entity->setParent($this->dir);
 
 			return $entity;
 		});
 		$dirForm = $admin->createForm($this->dirFormFactory, 'Directory', function () {
 			$entity = new DirEntity;
-			$entity->setParent($this->getCurrentDir());
+			$entity->setParent($this->dir);
 
 			return $entity;
 		});
 
 		$admin->connectFormWithAction($dirForm, $table->getAction('edit'));
-		$admin->connectActionAsDelete($table->getAction('delete'));
+		$action = $table->getAction('delete');
+		$admin->connectActionAsDelete($action);
+		$action->onClick[] = function () {
+			$this->redrawControl('content');
+		};
 
 		// Toolbar
 		$toolbar = $admin->getNavbar();
@@ -285,14 +291,22 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$toolbar->addSection('new', 'Create file', 'file');
 		$admin->connectFormWithNavbar($form, $toolbar->getSection('new'));
 
-		if ($this->key) {
-			$toolbar->addSection('up', 'Up')
-				->setIcon('arrow-up')
-				->onClick[] = function () {
-				$dir = $this->getCurrentDir();
-				$this->redirect('this', array('key' => $dir->parent ? $dir->parent->id : null));
-			};
-		}
+		$admin->onClose[] = function () {
+			$this->redrawControl('content');
+		};
+
+		$toolbar->addSection('up', 'Up')
+			->setIcon('arrow-up')
+			->onClick[] = function () {
+			$dir = $this->dir;
+
+			$this->redirect('this', array(
+				'key' => $dir->parent ? $dir->parent->id : null,
+			));
+
+			$this->dir = $dir->parent ?: null;
+			$this->redrawControl('content');
+		};
 
 		return $admin;
 	}
@@ -303,18 +317,15 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	protected function createComponentFileTable()
 	{
 		$admin = $this->createTable();
-		$admin->onAttached[] = function ($admin) {
-			$admin->getTable()->setTemplateFile(__DIR__ . '/Grido.latte');
-		};
 		$table = $admin->getTable();
 
 		$qb = $this->fileDao->createQueryBuilder('a')
 			->andWhere('a.invisible = :invisible')->setParameter('invisible', false);
 
-		if ($this->key === null) {
+		if ($this->dir === null) {
 			$qb->andWhere('a.parent IS NULL');
 		} else {
-			$qb->andWhere('a.parent = :par')->setParameter('par', $this->key);
+			$qb->andWhere('a.parent = :par')->setParameter('par', $this->dir->getId());
 		}
 
 		$table->setModel(new Doctrine($qb));
@@ -328,7 +339,11 @@ class FileBrowserControl extends \Venne\System\UI\Control
 
 		$form = $admin->createForm($this->fileEditFormFactory, 'File');
 		$admin->connectFormWithAction($form, $table->getAction('edit'));
-		$admin->connectActionAsDelete($table->getAction('delete'));
+		$action = $table->getAction('delete');
+		$admin->connectActionAsDelete($action);
+		$action->onClick[] = function () {
+			$this->redrawControl('content');
+		};
 
 		return $admin;
 	}
@@ -339,6 +354,10 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	protected function createTable()
 	{
 		$admin = $this->adminGridFactory->create($this->fileDao);
+		$admin->onRender[] = function ($admin) {
+			$admin->getTable()->setTemplateFile(__DIR__ . '/Grido.latte');
+		};
+
 		$table = $admin->getTable();
 
 		$table->addColumnText('name', 'Name');
@@ -348,12 +367,28 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		return $admin;
 	}
 
-	/**
-	 * @return DirEntity|null
-	 */
-	public function getCurrentDir()
+	public function loadState(array $params)
 	{
-		return $this->key ? $this->dirDao->find($this->key) : null;
+		if (isset($params['key'])) {
+			if (substr($params['key'], 1, 1) == ':') {
+				$params['key'] = substr($params['key'], 2);
+			}
+
+			$this->dir = $this->dirDao->find($params['key']);
+		}  elseif ($this->root) {
+			$this->dir = $this->root;
+		}
+
+		parent::loadState($params);
+	}
+
+	public function saveState(array & $params, $reflection = null)
+	{
+		parent::saveState($params, $reflection);
+
+		if ($this->dir !== null) {
+			$params['key'] = $this->dir->id;
+		}
 	}
 
 }

@@ -38,42 +38,52 @@ class FileEntity extends \Venne\Files\BaseFileEntity
 	 */
 	protected $parent;
 
+	/**
+	 * @var integer
+	 *
+	 * @ORM\Column(type="integer")
+	 */
+	protected $size;
+
+	/**
+	 * @var string
+	 *
+	 * @ORM\Column(type="string")
+	 */
+	protected $mimeType;
+
 	/** @var \Nette\Http\FileUpload|\SplFileInfo */
 	protected $file;
 
 	/**
-	 * @param string $path
 	 * @param string $basename
 	 * @return string
 	 */
-	private function suggestName($path, $basename)
+	private function suggestName($basename)
 	{
-		$pathName = new \SplFileInfo($path . '/' . $basename);
-		$extension = $pathName->getExtension();
-		$basename = $pathName->getBasename('.' . $extension);
-
-		if (!file_exists($path . '/' . $basename . '.' . $extension)) {
-			return $basename . '.' . $extension;
+		if (!file_exists($this->publicDir . '/' . $basename) && !file_exists($this->protectedDir . '/' . $basename)) {
+			return $basename;
 		}
 
-		$basename = explode('-', $basename);
+		$fileExtension = pathinfo($basename, PATHINFO_EXTENSION);
+		$fileName = pathinfo($basename, PATHINFO_FILENAME);
+		$fileName = explode('-', $fileName);
 
-		if (count($basename) > 1) {
-			$last = end($basename);
+		if (count($fileName) > 1) {
+			$last = end($fileName);
 			$i = intval($last);
 
 			if ($last && (string) $i == $last) {
 				do {
-					$basename[count($basename) - 1] = (string) (++$i);
-					$b = implode('-', $basename);
-					$file = $path . '/' . $b . '.' . $extension;
-				} while (file_exists($file));
+					$fileName[count($fileName) - 1] = (string) (++$i);
+					$file = implode('-', $fileName) . '.' . $fileExtension;
+				} while (file_exists($this->publicDir . '/' . $file) || file_exists($this->protectedDir . '/' . $file));
 
-				return $b . '.' . $extension;
+				return $file;
 			}
 		}
 
-		return $this->suggestName($path, implode('-', $basename) . '-1' . '.' . $extension);
+		return $this->suggestName(implode('-', $fileName) . '-1' . '.' . $fileExtension);
 	}
 
 	/**
@@ -86,12 +96,12 @@ class FileEntity extends \Venne\Files\BaseFileEntity
 		if ($this->file) {
 			if ($this->file instanceof FileUpload) {
 				$basename = $this->file->getSanitizedName();
-				$basename = $this->suggestName($this->getFilePath(), $basename);
+				$basename = $this->suggestName($basename);
 				$this->setName($basename);
 
 			} else {
 				$basename = trim(Strings::webalize($this->file->getBasename(), '.', false), '.-');
-				$basename = $this->suggestName(dirname($this->file->getPathname()), $basename);
+				$basename = $this->suggestName($basename);
 				$this->setName($basename);
 
 			}
@@ -105,6 +115,9 @@ class FileEntity extends \Venne\Files\BaseFileEntity
 			} else {
 				copy($this->file->getPathname(), $this->getFilePath());
 			}
+
+			$this->size = filesize($this->getFilePath());
+			$this->mimeType = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $this->getFilePath());
 
 			return $this->file = null;
 		}

@@ -50,7 +50,7 @@ class FilesExtension extends \Nette\DI\CompilerExtension
 			->addSetup('Venne\Files\Macros\MediaMacro::install(?->getCompiler())', array('@self'));
 
 		$container->addDefinition($this->prefix('fileFormFactory'))
-			->setClass('Venne\Files\FileFormFactory', array(new Statement('@system.admin.basicFormFactory')));
+			->setClass('Venne\Files\FileFormFactory', array(new Statement('@system.admin.ajaxFormFactory')));
 
 		$container->addDefinition($this->prefix('fileEditFormFactory'))
 			->setClass('Venne\Files\FileEditFormFactory', array(new Statement('@system.admin.ajaxFormFactory')));
@@ -69,7 +69,8 @@ class FilesExtension extends \Nette\DI\CompilerExtension
 			->setImplement('Venne\Files\FileBrowser\IFileBrowserControlFactory')
 			->setArguments(array(
 				new Statement('@doctrine.dao', array('Venne\Files\FileEntity')),
-				new Statement('@doctrine.dao', array('Venne\Files\DirEntity'))
+				new Statement('@doctrine.dao', array('Venne\Files\DirEntity')),
+				new Statement('@doctrine.dao', array('Venne\Security\UserEntity')),
 			))
 			->setInject(true);
 
