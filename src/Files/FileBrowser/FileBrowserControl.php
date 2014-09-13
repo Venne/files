@@ -14,6 +14,7 @@ namespace Venne\Files\FileBrowser;
 use Grido\DataSources\Doctrine;
 use Kdyby\Doctrine\EntityDao;
 use Nette\Application\BadRequestException;
+use Nette\Application\Responses\FileResponse;
 use Nette\Forms\Form;
 use Nette\Security\User;
 use Venne\Files\AjaxFileUploaderControl;
@@ -334,6 +335,12 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$action = $table->addActionEvent('open', 'Open');
 		$action->onClick[] = function ($id) use ($table) {
 			$this->getPresenter()->redirectUrl($this->fileDao->find($id)->getFileUrl());
+		};
+
+		$action = $table->addActionEvent('download', 'Download');
+		$action->onClick[] = function ($id) use ($table) {
+			$file = $this->fileDao->find($id);
+			$this->getPresenter()->sendResponse(new FileResponse($file->getFilePath()));
 		};
 
 		$table->addActionEvent('edit', 'Edit')
