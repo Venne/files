@@ -3,13 +3,17 @@
 <script>
 // <![CDATA[
 	$(function () {
-		$("#sortable div.item.d").on('dblclick', function (event) {
+		$('#sortable div.item.d').on('dblclick', function (event) {
 			$.nette.ajax({
-				url: $(this).find("a").attr("href")
+				url: $(this).find('a').attr('href')
 				{if $control->browserMode}
 				, off: ['history']
 				{/if}
 			});
+		});
+
+		$('#sortable div.item.f').on('dblclick', function (event) {
+			window.location = $(this).find('a').attr('href')
 		});
 
 		{if $control->browserMode}
@@ -21,7 +25,7 @@
 			return (match && match.length > 1) ? match[1] : '';
 		}
 
-		$("#sortable > div.item.f").dblclick(function () {
+		$('#sortable > div.item.f').dblclick(function () {
 			var funcNum = getUrlParam('CKEditorFuncNum');
 			window.opener.CKEDITOR.tools.callFunction(funcNum, $(this).find('a').attr('href'));
 			window.close();

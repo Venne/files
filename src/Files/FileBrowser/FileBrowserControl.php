@@ -331,6 +331,11 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$table->setModel(new Doctrine($qb));
 		$table->setDefaultSort(array('name' => 'ASC'));
 
+		$action = $table->addActionEvent('open', 'Open');
+		$action->onClick[] = function ($id) use ($table) {
+			$this->getPresenter()->redirectUrl($this->fileDao->find($id)->getFileUrl());
+		};
+
 		$table->addActionEvent('edit', 'Edit')
 			->getElementPrototype()->class[] = 'ajax';
 
