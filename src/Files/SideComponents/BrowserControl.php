@@ -40,7 +40,7 @@ class BrowserControl extends \Venne\System\UI\Control
 	public function addContentMenu($name, $callback)
 	{
 		if (isset($this->contentMenu[$name])) {
-			throw new InvalidArgumentException("Content menu '$name' is already exists.");
+			throw new InvalidArgumentException(sprintf('Content menu \'%s\' is already exists.', $name));
 		}
 
 		$this->contentMenu[$name] = Callback::closure($callback);
@@ -111,11 +111,11 @@ class BrowserControl extends \Venne\System\UI\Control
 	/**
 	 * @param int $from
 	 * @param int $to
-	 * @param string $dropmode
+	 * @param string $dropMode
 	 */
-	public function handleSetParent($from = null, $to = null, $dropmode = null)
+	public function handleSetParent($from = null, $to = null, $dropMode = null)
 	{
-		Callback::invokeArgs($this->dropCallback, array($from, $to, $dropmode));
+		Callback::invokeArgs($this->dropCallback, array($from, $to, $dropMode));
 	}
 
 	/**
@@ -126,4 +126,5 @@ class BrowserControl extends \Venne\System\UI\Control
 	{
 		$this->onExpand($key, $open === 'true');
 	}
+
 }

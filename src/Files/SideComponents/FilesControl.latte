@@ -1,15 +1,15 @@
 <div class="btn-toolbar">
 	<div class="btn-group">
-		<a n:if="$presenter->isAuthorized(':Files:Admin:Default:')" class="ajax btn btn-default"
-		   href="{plink :Files:Admin:Default: key=>NULL}"><span	class="glyphicon glyphicon-list-alt"></span> {_'Show in table'}</a>
+		<a n:if="$presenter->isAuthorized(':Admin:Files:Default:')" class="ajax btn btn-default"
+		   href="{plink :Admin:Files:Default: key=>NULL}"><span	class="glyphicon glyphicon-list-alt"></span> {_'Show in table'}</a>
 	</div>
 	<div class="btn-group pull-right">
 		<button class="btn btn-default dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-file"></span> {_'Create new'} <span class="caret"></span></button>
 		<ul class="dropdown-menu">
 			<li><a class="ajax"
-				   href="{plink :Files:Admin:Default: do=>fileBrowser-dir, id=>fileBrowser-navbar-directory}">{_'New directory'}</a></li>
+				   href="{plink :Admin:Files:Default: do=>fileBrowser-dir, id=>fileBrowser-navbar-directory}">{_'New directory'}</a></li>
 			<li><a class="ajax"
-				   href="{plink :Files:Admin:Default: do=>fileBrowser-dir, id=>fileBrowser-navbar-upload}">{_'Upload file'}</a></li>
+				   href="{plink :Admin:Files:Default: do=>fileBrowser-dir, id=>fileBrowser-navbar-upload}">{_'Upload file'}</a></li>
 		</ul>
 	</div>
 </div>

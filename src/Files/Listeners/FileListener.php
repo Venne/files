@@ -14,7 +14,7 @@ namespace Venne\Files\Listeners;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\PreFlushEventArgs;
 use Nette\DI\Container;
-use Venne\Files\BaseFileEntity;
+use Venne\Files\BaseFile;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
@@ -35,7 +35,7 @@ class FileListener
 	private $publicUrl;
 
 	/** @var \Nette\Security\User */
-	private $_user;
+	private $user;
 
 	/**
 	 * @param string $publicDir
@@ -51,22 +51,22 @@ class FileListener
 		$this->publicUrl = $container->parameters['basePath'] . substr($publicDir, strlen($wwwDir));
 	}
 
-	public function prePersist(BaseFileEntity $entity, LifecycleEventArgs $args)
+	public function prePersist(BaseFile $entity, LifecycleEventArgs $args)
 	{
 		$this->setup($entity);
 	}
 
-	public function preFlush(BaseFileEntity $entity, PreFlushEventArgs $args)
+	public function preFlush(BaseFile $entity, PreFlushEventArgs $args)
 	{
 		$this->setup($entity);
 	}
 
-	public function postLoad(BaseFileEntity $entity, LifecycleEventArgs $args)
+	public function postLoad(BaseFile $entity, LifecycleEventArgs $args)
 	{
 		$this->setup($entity);
 	}
 
-	private function setup(BaseFileEntity $entity)
+	private function setup(BaseFile $entity)
 	{
 		$entity->setPublicDir($this->publicDir);
 		$entity->setPublicUrl($this->publicUrl);
@@ -79,10 +79,10 @@ class FileListener
 	 */
 	private function getUser()
 	{
-		if (!$this->_user) {
-			$this->_user = $this->container->getByType('Nette\Security\User');
+		if (!$this->user) {
+			$this->user = $this->container->getByType('Nette\Security\User');
 		}
 
-		return $this->_user;
+		return $this->user;
 	}
 }

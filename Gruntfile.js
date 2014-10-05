@@ -8,6 +8,9 @@ module.exports = function(grunt) {
 				files: [
 					{expand: true, cwd: 'bower_components/blueimp-file-upload/js/', src: 'jquery.iframe-transport.js', dest: 'Resources/public/vendor/blueimp-file-upload/'},
 					{expand: true, cwd: 'bower_components/blueimp-file-upload/js/', src: 'jquery.fileupload.js', dest: 'Resources/public/vendor/blueimp-file-upload/'},
+					{expand: true, cwd: 'bower_components/fancytree/dist/', src: 'jquery.fancytree-custom.min.js', dest: 'Resources/public/vendor/fancytree/', filter: 'isFile'},
+					{expand: true, cwd: 'bower_components/fancytree/dist/', src: 'skin/**', dest: 'Resources/public/vendor/fancytree/'},
+					{expand: true, cwd: 'bower_components/fancytree/dist/', src: 'skin-vista/**', dest: 'Resources/public/vendor/fancytree/'},
 				]
 			}
 		},

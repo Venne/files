@@ -1,38 +1,47 @@
-<div id="tree-{$control->name}"></div>
-
+<div id="tree-{$control->uniqueId}"></div>
 
 <script type="text/javascript">
-// <![CDATA[
+	$(function () {
+		$("#tree-{!$control->uniqueId}").fancytree({
+			autoFocus: false,
 
-    $(function () {
-        $("#tree-{!$control->name}").dynatree({
-            autoFocus:false,
-            onActivate:function (node) {
-                node.deactivate();
-				$.nette.ajax({
-					url: {link click! key=>'this'}.replace('this', node.data.key)
-				});
-            },
-            // persist: true,
+			click: function (event, data) {
+				if (data.targetType === 'title') {
+					$.nette.ajax({
+						url: {link click! key=>'this'}.replace('this', data.node.key)
+					});
+				}
+			},
 
-            initAjax:{
-                data:{ mode:'all'},
-                url: '{!$control->link('getPages!')}'
-            },
+			clickFolderMode: 1,
 
-            onLazyRead:function (node) {
-                var url = {link getPages! 'this'}.
-                replace('this', node.data.key);
-                node.appendAjax({
-                    url:url
-                });
-            }
+			source: {
+				url: '{!$control->link('getPages!')}',
+				cache: false
+			},
+
+			lazyLoad: function (event, data) {
+				var url =
+				{link getPages! 'this'}.
+				replace('this', data.node.key);
+				data.result = {
+					url: url
+				};
+			}
 
 			{if count($control->onExpand) > 0}
 			,
-			onExpand:function (flag, dtnode) {
+			expand: function (event, data, flag) {
 				var url = {link expand! '-a-', '-b-'}.
-				replace('-a-', dtnode.data.key).replace('-b-', flag);
+				replace('-a-', data.node.key).replace('-b-', data.node.isExpanded());
+				$.nette.ajax({
+					url: url,
+					off: ['history']
+				});
+			},
+			collapse: function (event, data, flag) {
+				var url = {link expand! '-a-', '-b-'}.
+				replace('-a-', data.node.key).replace('-b-', data.node.isExpanded());
 				$.nette.ajax({
 					url: url,
 					off: ['history']
@@ -41,45 +50,29 @@
 			{/if}
 
 			{if $control->dropCallback}
-            ,
-			dnd:{
-                onDragStart:function (node) {
-                    return true;
-                },
-                onDragStop:function (node) {
-
-                },
-                autoExpandMS:1000,
-                preventVoidMoves:true, // Prevent dropping nodes 'before self', etc.
-                onDragEnter:function (node, sourceNode) {
-                    logMsg("tree.onDragEnter(%o, %o)", node, sourceNode);
-                    return true;
-                },
-                onDragOver:function (node, sourceNode, hitMode) {
-                    logMsg("tree.onDragOver(%o, %o, %o)", node, sourceNode, hitMode);
-                    // Prevent dropping a parent below it's own child
-                    if (node.isDescendantOf(sourceNode)) {
-                        return false;
-                    }
-                },
-                onDrop:function (node, sourceNode, hitMode, ui, draggable) {
-                    node.expand(true);
-                    var url = {link setParent 'from'=>'thisfrom', 'to'=>'thisto', 'dropmode'=>'thisdropmode'};
-                    url = url.replace('thisdropmode', hitMode).replace('thisto', node.data.key).replace('thisfrom', sourceNode.data.key);
-                    $.nette.ajax({
+			,
+			extensions: ['dnd'],
+			dnd: {
+				autoExpandMS: 1000,
+				preventVoidMoves: true,
+				dragStart: function (node, data) {
+					return true;
+				},
+				dragEnter: function (node, data) {
+					return true;
+				},
+				dragDrop: function (node, data) {
+					data.node.setExpanded(true);
+					var url = {link setParent 'from'=>'thisfrom', 'to'=>'thisto', 'dropmode'=>'thisdropmode'};
+					url = url.replace('thisdropmode', data.hitMode).replace('thisto', data.node.key).replace('thisfrom', data.otherNode.key);
+					$.nette.ajax({
 						url: url,
 						off: ['history']
 					});
-                    //alert("move:" + sourceNode.data.key + " to " + node.data.key + " hit " + hitMode);
-                    logMsg("tree.onDrop(%o, %o, %s)", node, sourceNode, hitMode);
-                    sourceNode.move(node, hitMode);
-                },
-                onDragLeave:function (node, sourceNode) {
-                    logMsg("tree.onDragLeave(%o, %o)", node, sourceNode);
-                }
-            }
+					data.otherNode.moveTo(node, data.hitMode);
+				}
+			}
 			{/if}
-        });
-    });
-// ]]>
+		});
+	});
 </script>

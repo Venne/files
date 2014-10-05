@@ -2,6 +2,7 @@
 	"name": "venne-files",
 	"version": "2.2.0",
 	"dependencies": {
+		"fancytree": "~2.3.0",
 		"blueimp-file-upload": "~9.5.7"
 	}
 }

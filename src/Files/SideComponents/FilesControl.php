@@ -11,8 +11,10 @@
 
 namespace Venne\Files\SideComponents;
 
-use Kdyby\Doctrine\EntityDao;
+use Doctrine\ORM\EntityManager;
 use Nette\Http\Session;
+use Venne\Files\Dir;
+use Venne\Files\File;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
@@ -23,22 +25,26 @@ class FilesControl extends \Venne\System\UI\Control
 	/** @var \Nette\Http\SessionSection */
 	private $session;
 
-	/** @var \Kdyby\Doctrine\EntityDao */
-	private $dirDao;
+	/** @var \Doctrine\ORM\EntityManager */
+	private $entityManager;
 
-	/** @var \Kdyby\Doctrine\EntityDao */
-	private $fileDao;
+	/** @var \Kdyby\Doctrine\EntityRepository */
+	private $dirRepository;
+
+	/** @var \Kdyby\Doctrine\EntityRepository */
+	private $fileRepository;
 
 	/** @var \Venne\Files\SideComponents\IBrowserControlFactory */
 	private $browserFactory;
 
-	public function __construct(EntityDao $dirRepository, EntityDao $fileRepository, Session $session, IBrowserControlFactory $browserFactory)
+	public function __construct(EntityManager $entityManager, Session $session, IBrowserControlFactory $browserFactory)
 	{
 		parent::__construct();
 
+		$this->entityManager = $entityManager;
+		$this->fileRepository = $entityManager->getRepository(File::class);
+		$this->dirRepository = $entityManager->getRepository(Dir::class);
 		$this->session = $session->getSection('Venne.Content.filesSide');
-		$this->dirDao = $dirRepository;
-		$this->fileDao = $fileRepository;
 		$this->browserFactory = $browserFactory;
 	}
 
@@ -79,7 +85,7 @@ class FilesControl extends \Venne\System\UI\Control
 		$browser->setDropCallback($this->setFileParent);
 		$browser->onClick[] = function ($key) {
 			if (substr($key, 0, 2) === 'd:') {
-				$this->getPresenter()->forward(':Files:Admin:Default:', array(
+				$this->getPresenter()->forward(':Admin:Files:Default:', array(
 					'fileBrowser-key' => substr($key, 2),
 					'do' => 'changeDir',
 				));
@@ -112,7 +118,7 @@ class FilesControl extends \Venne\System\UI\Control
 
 		$data = array();
 
-		$dql = $this->dirDao->createQueryBuilder('a')
+		$dql = $this->dirRepository->createQueryBuilder('a')
 			->orderBy('a.name', 'ASC');
 		if ($parent) {
 			$dql = $dql->andWhere('a.parent = ?1')->setParameter(1, $parent);
@@ -124,21 +130,21 @@ class FilesControl extends \Venne\System\UI\Control
 		foreach ($dql->getQuery()->getResult() as $page) {
 			$item = array('title' => $page->name, 'key' => 'd:' . $page->id);
 
-			$item['isFolder'] = true;
+			$item['folder'] = true;
 
 			if (count($page->children) > 0 || count($page->files) > 0) {
-				$item['isLazy'] = true;
+				$item['lazy'] = true;
 			}
 
 			if ($this->getState($page->id)) {
-				$item['expand'] = true;
+				$item['expanded'] = true;
 				$item['children'] = $this->getFiles('d:' . $page->id);
 			}
 
 			$data[] = $item;
 		}
 
-		$dql = $this->fileDao->createQueryBuilder('a')
+		$dql = $this->fileRepository->createQueryBuilder('a')
 			->orderBy('a.name', 'ASC');
 		if ($parent) {
 			$dql = $dql->andWhere('a.parent = ?1')->setParameter(1, $parent);
@@ -158,9 +164,9 @@ class FilesControl extends \Venne\System\UI\Control
 	/**
 	 * @param string $from
 	 * @param string $to
-	 * @param string $dropmode
+	 * @param string $dropMode
 	 */
-	public function setFileParent($from, $to, $dropmode)
+	public function setFileParent($from, $to, $dropMode)
 	{
 		$fromType = substr($from, 0, 1);
 		$from = substr($from, 2);
@@ -168,16 +174,16 @@ class FilesControl extends \Venne\System\UI\Control
 		$toType = substr($to, 0, 1);
 		$to = substr($to, 2);
 
-		$entity = $fromType == 'd' ? $this->dirDao->find($from) : $this->fileDao->find($from);
-		$target = $toType == 'd' ? $this->dirDao->find($to) : $this->fileDao->find($to);
+		$entity = $fromType == 'd' ? $this->dirRepository->find($from) : $this->fileRepository->find($from);
+		$target = $toType == 'd' ? $this->dirRepository->find($to) : $this->fileRepository->find($to);
 
-		if ($dropmode == "before" || $dropmode == "after") {
+		if ($dropMode === 'before' || $dropMode === 'after') {
 			$entity->setParent($target->parent);
 		} else {
 			$entity->setParent($target);
 		}
 
-		$fromType == 'd' ? $this->dirDao->save($entity) : $this->fileDao->save($entity);
+		$this->entityManager->flush($entity);
 	}
 
 }

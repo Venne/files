@@ -1,0 +1,8 @@
+services:
+
+	- Venne\Files\FileFormFactory (@system.admin.ajaxFormFactory)
+	- Venne\Files\FileEditFormFactory (@system.admin.ajaxFormFactory)
+	- Venne\Files\FileFormService
+
+	- Venne\Files\DirFormFactory (@system.admin.ajaxFormFactory)
+	- Venne\Files\DirFormService

@@ -11,11 +11,12 @@
 
 namespace Venne\Files\Macros;
 
-use Kdyby\Doctrine\EntityDao;
+use Doctrine\ORM\EntityManager;
 use Latte\CompileException;
 use Latte\Compiler;
 use Latte\MacroNode;
 use Nette\Utils\Strings;
+use Venne\Files\File;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
@@ -23,8 +24,8 @@ use Nette\Utils\Strings;
 class MediaMacro extends \Latte\Macros\MacroSet
 {
 
-	/** @var \Kdyby\Doctrine\EntityDao */
-	private static $fileDao;
+	/** @var \Kdyby\Doctrine\EntityRepository */
+	private static $fileRepository;
 
 	/** @var string[] */
 	private static $imageExtensions = array('jpeg', 'png', 'gif');
@@ -82,7 +83,7 @@ class MediaMacro extends \Latte\Macros\MacroSet
 	 */
 	public static function proccessFile($path)
 	{
-		return "/public/media/{$path}";
+		return '/public/media/' . $path;
 	}
 
 	/**
@@ -100,20 +101,19 @@ class MediaMacro extends \Latte\Macros\MacroSet
 		$ext = str_replace('jpg', 'jpeg', Strings::lower($ext->getExtension()));
 
 		if (array_search($ext, self::$imageExtensions) === false || ($type !== 'default' && array_search($type, self::$imageExtensions) === false)) {
-			throw new CompileException("Bad extension of file '{$path}'. You can use only: " . implode(', ', self::$imageExtensions));
+			throw new CompileException(sprintf('Bad extension of file \'%s\'. You can use only: %s', $path, implode(', ', self::$imageExtensions)));
 		}
 
 		if ($format == 'default' && ($type == 'default' || $type == $ext) && $size == 'default') {
-			return "/public/media/{$path}";
+			return '/public/media/' . $path;
 		}
 
-		return "/public/media/_cache/{$size}/{$format}/{$type}/{$path}";
+		return sprintf('/public/media/_cache/%s/%s/%s/%s', $size, $format, $type, $path);
 	}
 
-	public static function setFileDao(EntityDao $fileDao)
+	public static function setEntityManager(EntityManager $entityManager)
 	{
-		self::$fileDao = $fileDao;
+		self::$fileRepository = $entityManager->getRepository(File::class);
 	}
 
 }
-

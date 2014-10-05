@@ -11,10 +11,11 @@
 
 namespace Venne\Files\AdminModule;
 
-use Kdyby\Doctrine\EntityDao;
+use Doctrine\ORM\EntityManager;
 use Nette\Application\BadRequestException;
 use Nette\Application\ForbiddenRequestException;
 use Nette\Utils\Image;
+use Venne\Files\File;
 use Venne\Files\PermissionDeniedException;
 
 /**
@@ -38,12 +39,12 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 	/** @var bool */
 	protected $cached = false;
 
-	/** @var \Kdyby\Doctrine\EntityDao */
-	protected $fileDao;
+	/** @var \Kdyby\Doctrine\EntityRepository */
+	protected $fileRepository;
 
-	public function __construct(EntityDao $fileDao)
+	public function __construct(EntityManager $entityManager)
 	{
-		$this->fileDao = $fileDao;
+		$this->fileRepository = $entityManager->getRepository(File::class);
 		$this->autoCanonicalize = false;
 	}
 
@@ -59,7 +60,7 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 
 	public function actionDefault()
 	{
-		if (!($file = $this->fileDao->findOneBy(array('path' => $this->url)))) {
+		if (!($file = $this->fileRepository->findOneBy(array('path' => $this->url)))) {
 			throw new BadRequestException;
 		}
 
@@ -85,8 +86,8 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 			$this->url = substr($this->url, 7);
 		}
 
-		if (($entity = $this->fileDao->findOneBy(array('path' => $this->url))) === null) {
-			throw new \Nette\Application\BadRequestException("File '{$this->url}' does not exist.");
+		if (($entity = $this->fileRepository->findOneBy(array('path' => $this->url))) === null) {
+			throw new \Nette\Application\BadRequestException(sprintf('File \'%s\' does not exist.', $this->url));
 		}
 
 		$image = Image::fromFile($entity->getFilePath());
@@ -107,7 +108,14 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 
 		$type = $this->type === 'jpg' ? Image::JPEG : $this->type === 'gif' ? Image::GIF : Image::PNG;
 
-		$file = $this->context->parameters['wwwDir'] . "/public/media/_cache/{$this->size}/{$this->format}/{$this->type}/{$entity->getPath()}";
+		$file = sprintf(
+			'%s/%s/%s/%s/%s',
+			$this->context->parameters['wwwDir'],
+			$this->size,
+			$this->format,
+			$this->type,
+			$entity->getPath()
+		);
 		$dir = dirname($file);
 		umask(0000);
 		@mkdir($dir, 0777, true);
@@ -116,4 +124,3 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 	}
 
 }
-

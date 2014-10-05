@@ -51,12 +51,9 @@ class FileFormFactory implements \Venne\Forms\IFormFactory
 			->addCondition($form::EQUAL, true)
 			->toggle('form-permissions');
 
-		$form->addGroup()->setOption('id', 'form-permissions');
+		$form->addGroup()->setOption('container', 'fieldset id=form-permissions');
 		$form->addMultiSelect('readRoles', 'Read')
 			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
-
-		$form->setCurrentGroup();
-		$form->addSubmit('_submit', 'Save');
 
 		return $form;
 	}

@@ -18,4 +18,3 @@ class PermissionDeniedException extends \Exception
 {
 
 }
-

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="venne/files" default="build">
+
+	<property name="path.venne.files.builded" value="${path.venne.files.root}/.builded"/>
+	<property name="path.venne.files.bower.executable" value="bower"/>
+	<property name="path.venne.files.npm.executable" value="npm"/>
+	<property name="path.venne.files.grunt.executable" value="grunt"/>
+	<property name="path.venne.files.tester.executable" value="${path.bin}/tester"/>
+	<property name="path.venne.files.phpcs.executable" value="${path.bin}/phpcs"/>
+	<property name="path.venne.files.root" value="${path.vendor}/venne/files"/>
+	<property name="path.venne.files.build" value="${path.venne.files.root}/build"/>
+	<property name="path.venne.files.src" value="${path.venne.files.root}/src"/>
+	<property name="path.venne.files.tests" value="${path.venne.files.root}/tests"/>
+	<property name="path.venne.files.phpcs.ruleset" value="${path.venne.files.build}/ruleset.xml"/>
+
+	<target name="build">
+		<if>
+			<available file="${path.venne.files.builded}" />
+			<then>
+			</then>
+			<else>
+				<exec
+						executable="${path.venne.files.bower.executable}"
+						logoutput="true"
+						passthru="true"
+						checkreturn="true"
+						dir="${path.venne.files.root}"
+						>
+					<arg value="install"/>
+				</exec>
+				<exec
+						executable="${path.venne.files.npm.executable}"
+						logoutput="true"
+						passthru="true"
+						checkreturn="true"
+						dir="${path.venne.files.root}"
+						>
+					<arg value="install"/>
+				</exec>
+				<exec
+						executable="${path.venne.files.grunt.executable}"
+						logoutput="true"
+						passthru="true"
+						checkreturn="true"
+						dir="${path.venne.files.root}"
+						>
+				</exec>
+				<touch file="${path.venne.files.builded}" />
+			</else>
+		</if>
+	</target>
+
+	<target name="rebuild">
+		<delete file="${path.venne.files.builded}" />
+		<phingcall target="build" />
+	</target>
+
+	<target name="check" depends="check-php,tester"/>
+
+	<target name="check-php" depends="phpcs"/>
+
+	<target name="phpcs">
+		<exec
+				executable="${path.venne.files.phpcs.executable}"
+				logoutput="true"
+				passthru="true"
+				checkreturn="true"
+				>
+			<arg value="--standard=${path.venne.files.phpcs.ruleset}"/>
+			<arg value="--extensions=php"/>
+			<arg value="--encoding=utf-8"/>
+			<arg value="--tab-width=4"/>
+			<arg value="-sp"/>
+			<arg path="${path.venne.files.src}"/>
+		</exec>
+	</target>
+
+	<target name="tester">
+		<exec
+				executable="${path.venne.files.tester.executable}"
+				logoutput="true"
+				passthru="true"
+				checkreturn="true"
+				>
+			<arg path="${path.venne.files.tests}"/>
+			<arg value="-s"/>
+		</exec>
+	</target>
+
+</project>
