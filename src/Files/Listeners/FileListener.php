@@ -14,6 +14,7 @@ namespace Venne\Files\Listeners;
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\PreFlushEventArgs;
 use Nette\DI\Container;
+use Nette\Security\User;
 use Venne\Files\BaseFile;
 
 /**
@@ -80,7 +81,7 @@ class FileListener
 	private function getUser()
 	{
 		if (!$this->user) {
-			$this->user = $this->container->getByType('Nette\Security\User');
+			$this->user = $this->container->getByType(User::class);
 		}
 
 		return $this->user;

@@ -95,23 +95,22 @@ class Dir extends \Venne\Files\BaseFile
 			$oldProtectedPath = $this->protectedDir . '/' . $this->oldPath;
 			$oldPublicPath = $this->publicDir . '/' . $this->oldPath;
 
-			if (file_exists($oldProtectedPath)) {
+			if (is_dir($oldProtectedPath)) {
 				rename($oldProtectedPath, $protectedPath);
 			}
-			if (file_exists($oldPublicPath)) {
+			if (is_dir($oldPublicPath)) {
 				rename($oldPublicPath, $publicPath);
 			}
 
 			return;
 		}
 
-		umask(0000);
-		if (!file_exists($protectedPath)) {
-			@mkdir($protectedPath, 0777, true);
+		if (!is_dir($protectedPath)) {
+			mkdir($protectedPath, 0777, true);
 		}
 
-		if (!file_exists($publicPath)) {
-			@mkdir($publicPath, 0777, true);
+		if (!is_dir($publicPath)) {
+			mkdir($publicPath, 0777, true);
 		}
 	}
 
@@ -133,8 +132,8 @@ class Dir extends \Venne\Files\BaseFile
 		$protectedPath = $this->protectedDir . '/' . $this->path;
 		$publicPath = $this->publicDir . '/' . $this->path;
 
-		@rmdir($protectedPath);
-		@rmdir($publicPath);
+		rmdir($protectedPath);
+		rmdir($publicPath);
 	}
 
 	/**

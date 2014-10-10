@@ -138,13 +138,13 @@ class BaseFile extends \Kdyby\Doctrine\Entities\BaseEntity
 	 */
 	public function copyPermission(BaseFile $parent = null)
 	{
-		$parent = $parent ?: $this->parent;
+		$parent = $parent !== null ? $parent : $this->parent;
 
 		if ($parent === null) {
 			return;
 		}
 
-		if (!$this->user) {
+		if ($this->user === null) {
 			$this->user = $parent->user;
 		}
 
@@ -360,16 +360,16 @@ class BaseFile extends \Kdyby\Doctrine\Entities\BaseEntity
 			$this->parent->__load();
 		}
 
-		$this->path = ($this->parent ? $this->parent->path . '/' : '') . Strings::webalize($this->name, '.', false);
+		$this->path = ($this->parent !== null ? $this->parent->path . '/' : '') . Strings::webalize($this->name, '.', false);
 
 		if ($this->path == $old) {
 			return;
 		}
 
-		if ($this->id) {
-			if (!$this->oldPath && $old != $this->path) {
+		if ($this->id !== null) {
+			if (!$this->oldPath && $old !== $this->path) {
 				$this->oldPath = $old;
-			} elseif ($this->oldPath && $this->oldPath == $this->path) {
+			} elseif ($this->oldPath && $this->oldPath === $this->path) {
 				$this->oldPath = null;
 			}
 		}
@@ -413,7 +413,7 @@ class BaseFile extends \Kdyby\Doctrine\Entities\BaseEntity
 
 		if ($this->author === null && $user->identity instanceof User) {
 			$this->author = $user->identity;
-			$this->updated = new \DateTime;
+			$this->updated = new DateTime;
 		}
 
 		$this->user = $user;
@@ -435,7 +435,7 @@ class BaseFile extends \Kdyby\Doctrine\Entities\BaseEntity
 		}
 
 		$this->author = $author;
-		$this->updated = new \DateTime;
+		$this->updated = new DateTime;
 	}
 
 	/**

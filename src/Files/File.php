@@ -11,6 +11,7 @@
 
 namespace Venne\Files;
 
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Nette\Http\FileUpload;
 use Nette\InvalidArgumentException;
@@ -124,11 +125,14 @@ class File extends \Venne\Files\BaseFile
 
 		if (
 			($this->oldPath || $this->oldProtected !== null) &&
-			($this->oldPath != $this->path || $this->oldProtected != $this->protected)
+			($this->oldPath !== $this->path || $this->oldProtected !== $this->protected)
 		) {
-			$oldFilePath = $this->getFilePathBy($this->oldProtected !== null ? $this->oldProtected : $this->protected, $this->oldPath ?: $this->path);
+			$oldFilePath = $this->getFilePathBy(
+				$this->oldProtected !== null ? $this->oldProtected : $this->protected,
+				$this->oldPath !== null ? $this->oldPath : $this->path
+			);
 
-			if (file_exists($oldFilePath)) {
+			if (is_file($oldFilePath)) {
 				rename($oldFilePath, $this->getFilePath());
 			}
 		}
@@ -145,7 +149,7 @@ class File extends \Venne\Files\BaseFile
 
 		// remove cache
 		$dir = $this->publicDir . '/_cache';
-		if (file_exists($dir)) {
+		if (is_dir($dir)) {
 			foreach (Finder::findFiles('*/*/*/' . $this->getName())->from($dir) as $file) {
 				@unlink($file->getPathname());
 			}
@@ -198,7 +202,7 @@ class File extends \Venne\Files\BaseFile
 	public function setFile($file)
 	{
 		if (!$file instanceof FileUpload && !$file instanceof \SplFileInfo) {
-			throw new InvalidArgumentException("File must be instance of 'FileUpload' OR 'SplFileInfo'. '" . get_class($file) . "' is given.");
+			throw new InvalidArgumentException(sprintf('File must be instance of \'FileUpload\' OR \'SplFileInfo\'. \'%s\' is given.', get_class($file)));
 		}
 
 		if ($file instanceof FileUpload && !$file->isOk()) {
@@ -212,7 +216,7 @@ class File extends \Venne\Files\BaseFile
 
 		$this->file = $file;
 
-		$this->updated = new \DateTime;
+		$this->updated = new DateTime;
 	}
 
 	/**
