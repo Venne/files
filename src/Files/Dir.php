@@ -57,6 +57,9 @@ class Dir extends \Venne\Files\BaseFile
 	 **/
 	protected $writeRoles;
 
+	/** @var boolean */
+	private $removed = false;
+
 	public function __construct()
 	{
 		parent::__construct();
@@ -88,6 +91,10 @@ class Dir extends \Venne\Files\BaseFile
 	 */
 	public function preUpdate()
 	{
+		if ($this->removed) {
+			return;
+		}
+
 		$protectedPath = $this->protectedDir . '/' . $this->path;
 		$publicPath = $this->publicDir . '/' . $this->path;
 
@@ -121,6 +128,12 @@ class Dir extends \Venne\Files\BaseFile
 	 */
 	public function preRemove()
 	{
+		if ($this->removed) {
+			return;
+		}
+
+		$this->removed = true;
+
 		foreach ($this->getChildren() as $dir) {
 			$dir->preRemove();
 		}

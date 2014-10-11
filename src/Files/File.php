@@ -15,7 +15,6 @@ use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Nette\Http\FileUpload;
 use Nette\InvalidArgumentException;
-use Nette\Utils\Finder;
 use Nette\Utils\Strings;
 
 /**
@@ -26,7 +25,10 @@ use Nette\Utils\Strings;
  *    name="path_idx", columns={"path"}
  * )})
  * @ORM\HasLifecycleCallbacks
- * @ORM\EntityListeners({"Venne\Files\Listeners\FileListener"})
+ * @ORM\EntityListeners({
+ * "Venne\Files\Listeners\FileListener",
+ * "Venne\Files\Listeners\CacheCleanerListener"
+ * })
  */
 class File extends \Venne\Files\BaseFile
 {
@@ -55,6 +57,9 @@ class File extends \Venne\Files\BaseFile
 
 	/** @var \Nette\Http\FileUpload|\SplFileInfo */
 	protected $file;
+
+	/** @var boolean */
+	private $removed = false;
 
 	/**
 	 * @param string $basename
@@ -94,6 +99,10 @@ class File extends \Venne\Files\BaseFile
 	 */
 	public function preUpload()
 	{
+		if ($this->removed) {
+			return;
+		}
+
 		if ($this->file) {
 			if ($this->file instanceof FileUpload) {
 				$basename = $this->file->getSanitizedName();
@@ -145,15 +154,12 @@ class File extends \Venne\Files\BaseFile
 	 */
 	public function preRemove()
 	{
-		@unlink($this->getFilePath());
-
-		// remove cache
-		$dir = $this->publicDir . '/_cache';
-		if (is_dir($dir)) {
-			foreach (Finder::findFiles('*/*/*/' . $this->getName())->from($dir) as $file) {
-				@unlink($file->getPathname());
-			}
+		if ($this->removed) {
+			return;
 		}
+
+		$this->removed = true;
+		unlink($this->getFilePath());
 	}
 
 	/**

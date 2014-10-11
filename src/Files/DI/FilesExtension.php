@@ -61,6 +61,11 @@ class FilesExtension extends \Nette\DI\CompilerExtension
 				$container->expand($container->parameters['wwwDir'])
 			));
 
+		$container->addDefinition($this->prefix('cacheCleanerListener'))
+			->setClass('Venne\Files\Listeners\CacheCleanerListener', array(
+				$container->expand($config['publicDir']),
+			));
+
 		$container->addDefinition($this->prefix('fileBrowserControlFactory'))
 			->setImplement('Venne\Files\FileBrowser\IFileBrowserControlFactory')
 			->setInject(true);
