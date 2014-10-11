@@ -87,4 +87,16 @@
 		</exec>
 	</target>
 
+	<target name="watch">
+		<exec
+				executable="${path.venne.files.grunt.executable}"
+				logoutput="true"
+				passthru="true"
+				checkreturn="true"
+				dir="${path.venne.files.root}"
+				>
+			<arg value="watch"/>
+		</exec>
+	</target>
+
 </project>
