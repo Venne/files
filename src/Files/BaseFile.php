@@ -138,13 +138,13 @@ class BaseFile extends \Kdyby\Doctrine\Entities\BaseEntity
 	 */
 	public function copyPermission(BaseFile $parent = null)
 	{
-		$parent = $parent !== null ? $parent : $this->parent;
+		$parent = $parent ?: $this->parent;
 
 		if ($parent === null) {
 			return;
 		}
 
-		if ($this->user === null) {
+		if (!$this->user) {
 			$this->user = $parent->user;
 		}
 
@@ -360,16 +360,16 @@ class BaseFile extends \Kdyby\Doctrine\Entities\BaseEntity
 			$this->parent->__load();
 		}
 
-		$this->path = ($this->parent !== null ? $this->parent->path . '/' : '') . Strings::webalize($this->name, '.', false);
+		$this->path = ($this->parent ? $this->parent->path . '/' : '') . Strings::webalize($this->name, '.', false);
 
 		if ($this->path == $old) {
 			return;
 		}
 
-		if ($this->id !== null) {
-			if (!$this->oldPath && $old !== $this->path) {
+		if ($this->id) {
+			if (!$this->oldPath && $old != $this->path) {
 				$this->oldPath = $old;
-			} elseif ($this->oldPath && $this->oldPath === $this->path) {
+			} elseif ($this->oldPath && $this->oldPath == $this->path) {
 				$this->oldPath = null;
 			}
 		}
