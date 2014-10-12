@@ -55,9 +55,6 @@ class FileEditFormFactory implements \Venne\Forms\IFormFactory
 		$form->addMultiSelect('readRoles', 'Read')
 			->setOption(IComponentMapper::ITEMS_TITLE, 'name');
 
-		$form->setCurrentGroup();
-		$form->addSubmit('_submit', 'Save');
-
 		return $form;
 	}
 
