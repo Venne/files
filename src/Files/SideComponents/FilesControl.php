@@ -53,6 +53,11 @@ class FilesControl extends \Venne\System\UI\Control
 		$this->template->render();
 	}
 
+	public function redrawContent()
+	{
+		$this->redrawControl('content');
+	}
+
 	/**
 	 * @param int $id
 	 * @param bool $state

@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManager;
 use Venne\Files\Dir;
 use Venne\Files\FileBrowser\IFileBrowserControlFactory;
 use Venne\Files\File;
+use Venne\Files\SideComponents\FilesControl;
 use Venne\System\AdminPresenterTrait;
 
 /**
@@ -56,6 +57,11 @@ class DefaultPresenter extends \Nette\Application\UI\Presenter
 	protected function createComponentFileBrowser()
 	{
 		$control = $this->fileBrowserControlFactory->create();
+
+		$sideComponent = $this->getSideComponents()->getSideComponent();
+		if ($sideComponent instanceof FilesControl) {
+			$control->setSideComponent($sideComponent);
+		}
 
 		return $control;
 	}

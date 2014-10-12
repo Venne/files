@@ -25,6 +25,7 @@ use Venne\Files\File;
 use Venne\Files\FileFormFactory;
 use Venne\Files\FileFormService;
 use Venne\Files\IAjaxFileUploaderControlFactory;
+use Venne\Files\SideComponents\FilesControl;
 use Venne\Security\User;
 use Venne\System\Components\AdminGrid\IAdminGridFactory;
 
@@ -70,6 +71,9 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	/** @var \Venne\Files\DirFormService */
 	private $dirFormService;
 
+	/** @var \Venne\Files\SideComponents\FilesControl|null */
+	private $sideComponent;
+
 	public function __construct(
 		EntityManager $entityManager,
 		FileFormService $fileFormService,
@@ -88,6 +92,11 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$this->ajaxFileUploaderFactory = $ajaxFileUploaderFactory;
 		$this->adminGridFactory = $adminGridFactory;
 		$this->netteUser = $netteUser;
+	}
+
+	public function setSideComponent(FilesControl $sideComponent = null)
+	{
+		$this->sideComponent = $sideComponent;
 	}
 
 	public function render()
@@ -183,6 +192,10 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$control->onSuccess[] = function () {
 			$this->redirect('this');
 			$this->redrawControl('content');
+
+			if ($this->sideComponent !== null) {
+				$this->sideComponent->redrawContent();
+			}
 		};
 		$control->onError[] = function (AjaxFileUploaderControl $control) {
 			foreach ($control->getErrors() as $e) {
@@ -275,12 +288,20 @@ class FileBrowserControl extends \Venne\System\UI\Control
 				$this->getParameter('key')
 			);
 		});
+		$dirForm->onSuccess[] = function () {
+			if ($this->sideComponent !== null) {
+				$this->sideComponent->redrawContent();
+			}
+		};
 
 		$admin->connectFormWithAction($dirForm, $table->getAction('edit'));
 		$action = $table->getAction('delete');
 		$admin->connectActionAsDelete($action);
 		$action->onClick[] = function () {
 			$this->redrawControl('content');
+			if ($this->sideComponent !== null) {
+				$this->sideComponent->redrawContent();
+			}
 		};
 
 		// Toolbar
