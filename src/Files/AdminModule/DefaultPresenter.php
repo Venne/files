@@ -38,8 +38,7 @@ class DefaultPresenter extends \Nette\Application\UI\Presenter
 	public function __construct(
 		EntityManager $entityManager,
 		IFileBrowserControlFactory $fileBrowserControlFactory
-	)
-	{
+	) {
 		$this->fileBrowserControlFactory = $fileBrowserControlFactory;
 		$this->dirRepository = $entityManager->getRepository(Dir::class);
 		$this->fileRepository = $entityManager->getRepository(File::class);

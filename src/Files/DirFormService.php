@@ -30,8 +30,7 @@ class DirFormService extends \Venne\System\DoctrineFormService
 		DirFormFactory $formFactory,
 		EntityManager $entityManager,
 		EntityFormMapper $entityFormMapper
-	)
-	{
+	) {
 		parent::__construct($formFactory, $entityManager, $entityFormMapper);
 		$this->formFactory = $formFactory;
 	}

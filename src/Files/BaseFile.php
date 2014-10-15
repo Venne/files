@@ -375,7 +375,6 @@ class BaseFile extends \Kdyby\Doctrine\Entities\BaseEntity
 		}
 	}
 
-
 	/** Setters for paths */
 
 	/**

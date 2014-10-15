@@ -81,8 +81,7 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		IAjaxFileUploaderControlFactory $ajaxFileUploaderFactory,
 		IAdminGridFactory $adminGridFactory,
 		NetteUser $netteUser
-	)
-	{
+	) {
 		$this->entityManager = $entityManager;
 		$this->fileRepository = $entityManager->getRepository(File::class);
 		$this->dirRepository = $entityManager->getRepository(Dir::class);

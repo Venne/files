@@ -39,8 +39,7 @@ class FileFormService extends \Venne\System\DoctrineFormService
 		FileEditFormFactory $fileEditFormFactory,
 		EntityManager $entityManager,
 		EntityFormMapper $entityFormMapper
-	)
-	{
+	) {
 		parent::__construct($formFactory, $entityManager, $entityFormMapper);
 		$this->formFactory = $formFactory;
 		$this->fileEditFormFactory = $fileEditFormFactory;

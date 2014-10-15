@@ -18,8 +18,7 @@ use Venne\System\DI\SystemExtension;
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class FilesExtension extends \Nette\DI\CompilerExtension
-	implements
+class FilesExtension extends \Nette\DI\CompilerExtension implements
 	\Kdyby\Doctrine\DI\IEntityProvider,
 	\Venne\System\DI\IPresenterProvider,
 	\Kdyby\Translation\DI\ITranslationProvider,
