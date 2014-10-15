@@ -353,23 +353,6 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$table->setModel(new Doctrine($qb));
 		$table->setDefaultSort(array('name' => 'ASC'));
 
-		$action = $table->addActionEvent('open', 'Open');
-		$action->onClick[] = function ($id) use ($table) {
-			$this->getPresenter()->redirectUrl($this->fileRepository->find($id)->getFileUrl());
-		};
-
-		$action = $table->addActionEvent('download', 'Download');
-		$action->onClick[] = function ($id) use ($table) {
-			$file = $this->fileRepository->find($id);
-			$this->getPresenter()->sendResponse(new FileResponse($file->getFilePath()));
-		};
-
-		$table->addActionEvent('edit', 'Edit')
-			->getElementPrototype()->class[] = 'ajax';
-
-		$table->addActionEvent('delete', 'Delete')
-			->getElementPrototype()->class[] = 'ajax';
-
 		$form = $admin->addForm('file', 'File', function (File $file = null) {
 			return $this->fileFormService->getFormFactory(
 				$file !== null ? $file->getId() : null,
@@ -377,12 +360,29 @@ class FileBrowserControl extends \Venne\System\UI\Control
 				FileFormService::TYPE_EDIT
 			);
 		});
-		$admin->connectFormWithAction($form, $table->getAction('edit'));
-		$action = $table->getAction('delete');
-		$admin->connectActionAsDelete($action);
-		$action->onClick[] = function () {
+
+		$openAction = $table->addActionEvent('open', 'Open');
+		$openAction->onClick[] = function ($id) use ($table) {
+			$this->getPresenter()->redirectUrl($this->fileRepository->find($id)->getFileUrl());
+		};
+
+		$downloadAction = $table->addActionEvent('download', 'Download');
+		$downloadAction->onClick[] = function ($id) use ($table) {
+			$file = $this->fileRepository->find($id);
+			$this->getPresenter()->sendResponse(new FileResponse($file->getFilePath()));
+		};
+
+		$editAction = $table->addActionEvent('edit', 'Edit');
+		$editAction->getElementPrototype()->class[] = 'ajax';
+
+		$deleteAction = $table->addActionEvent('delete', 'Delete');
+		$deleteAction->getElementPrototype()->class[] = 'ajax';
+		$deleteAction->onClick[] = function () {
 			$this->redrawControl('content');
 		};
+
+		$admin->connectFormWithAction($form, $editAction);
+		$admin->connectActionAsDelete($deleteAction);
 
 		return $admin;
 	}
