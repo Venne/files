@@ -112,7 +112,7 @@ class FilesControl extends \Venne\System\UI\Control
 	}
 
 	/**
-	 * @param string $parent
+	 * @param string|null $parent
 	 * @return mixed[]
 	 */
 	public function getFiles($parent = null)
@@ -121,7 +121,18 @@ class FilesControl extends \Venne\System\UI\Control
 
 		$this->setState((int) $parent, true);
 
-		$data = array();
+		if ($parent === null) {
+			$rootData = array(
+				array(
+					'title' => $this->getTranslator()->translate('Root'),
+					'key' => 'd:',
+					'folder' => true,
+					'expanded' => true,
+					'children' => array(),
+				),
+			);
+			$data = & $rootData[0]['children'];
+		}
 
 		$dql = $this->dirRepository->createQueryBuilder('a')
 			->orderBy('a.name', 'ASC');
@@ -163,7 +174,7 @@ class FilesControl extends \Venne\System\UI\Control
 			$data[] = $item;
 		}
 
-		return $data;
+		return $parent !== null ? $data : $rootData;
 	}
 
 	/**
