@@ -61,20 +61,20 @@
 
 <script>
 	$(function () {
-		$('.dropdown-toggle').on('click',function(e){
+		$('#sortable .dropdown-toggle').on('click', function (e) {
 			e.preventDefault();
 		});
-		$('.dropdown-toggle').on('contextmenu click',function(e){
-			var _this = $(this);
+		$('#sortable .dropdown-toggle').on('contextmenu click', function (e) {
+			var $this = $(this);
 			e.preventDefault();
-			_this.dropdown('toggle');
+			$this.dropdown('toggle');
 
-			_this.parent().on('mouseleave', function(){
+			$this.parent().on('mouseleave', function () {
 				$(this).off('mouseleave');
 				$(this).removeClass('open');
 			});
 		});
-	});""
+	});
 </script>
 
 {control ajaxFileUploader}
