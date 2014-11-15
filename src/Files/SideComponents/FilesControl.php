@@ -91,7 +91,12 @@ class FilesControl extends \Venne\System\UI\Control
 		$browser->onClick[] = function ($key) {
 			if (substr($key, 0, 2) === 'd:') {
 				$this->getPresenter()->forward(':Admin:Files:Default:', array(
-					'fileBrowser-key' => substr($key, 2),
+					'fileBrowser-dirId' => substr($key, 2),
+					'do' => 'changeDir',
+				));
+			} else {
+				$this->getPresenter()->forward(':Admin:Files:Default:', array(
+					'fileBrowser-fileId' => substr($key, 2),
 					'do' => 'changeDir',
 				));
 			}

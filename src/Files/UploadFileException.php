@@ -14,7 +14,7 @@ namespace Venne\Files;
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
  */
-class PermissionDeniedException extends InvalidStateFileException
+class UploadFileException extends InvalidStateFileException
 {
 
 }

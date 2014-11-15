@@ -97,7 +97,7 @@ class File extends \Venne\Files\BaseFile
 	 *
 	 * @ORM\PreFlush()
 	 */
-	public function preUpload()
+	public function preFlush()
 	{
 		if ($this->removed) {
 			return;
@@ -117,13 +117,48 @@ class File extends \Venne\Files\BaseFile
 			}
 
 			if ($this->oldPath && $this->oldPath !== $this->path) {
-				@unlink($this->getFilePathBy($this->oldProtected, $this->oldPath));
+				$filePath = $this->getFilePathBy($this->oldProtected, $this->oldPath);
+
+				if (!is_file($filePath)) {
+					throw new RemoveFileException(sprintf('File \'%s\' does not exist.', $filePath));
+				}
+
+				unlink($filePath);
+
+				if (is_file($filePath)) {
+					throw new RemoveFileException(sprintf('File \'%s\' cannot be removed. Check access rights.', $filePath));
+				}
 			}
 
 			if ($this->file instanceof FileUpload) {
-				$this->file->move($this->getFilePath());
+				try {
+					$filePath = $this->getFilePath();
+					$this->file->move($filePath);
+				} catch (\Nette\InvalidStateException $e) {
+					throw new UploadFileException();
+				}
+
+				if (!is_file($filePath)) {
+					throw new RemoveFileException(sprintf('File \'%s\' does not exist.', $filePath));
+				}
+
 			} else {
-				copy($this->file->getPathname(), $this->getFilePath());
+				$oldFilePath = $this->file->getPathname();
+				$filePath = $this->getFilePath();
+
+				if (!is_file($oldFilePath)) {
+					throw new RenameFileException(sprintf('File \'%s\' does not exist.', $oldFilePath));
+				}
+
+				if (is_file($filePath)) {
+					throw new RenameFileException(sprintf('File \'%s\' already exists.', $filePath));
+				}
+
+				copy($oldFilePath, $filePath);
+
+				if (!is_file($filePath)) {
+					throw new RenameFileException(sprintf('File \'%s\' does not exist.', $filePath));
+				}
 			}
 
 			$this->size = filesize($this->getFilePath());
@@ -141,8 +176,24 @@ class File extends \Venne\Files\BaseFile
 				$this->oldPath !== null ? $this->oldPath : $this->path
 			);
 
+			$filePath = $this->getFilePath();
+
+			if (!is_file($oldFilePath)) {
+				throw new RenameFileException(sprintf('File \'%s\' does not exist.', $oldFilePath));
+			}
+
+			if (is_file($filePath)) {
+				throw new RenameFileException(sprintf('File \'%s\' already exists.', $filePath));
+			}
+
+			rename($oldFilePath, $filePath);
+
 			if (is_file($oldFilePath)) {
-				rename($oldFilePath, $this->getFilePath());
+				throw new RenameFileException(sprintf('File \'%s\' already exists.', $oldFilePath));
+			}
+
+			if (!is_file($filePath)) {
+				throw new RenameFileException(sprintf('File \'%s\' does not exist.', $filePath));
 			}
 		}
 	}
@@ -159,7 +210,17 @@ class File extends \Venne\Files\BaseFile
 		}
 
 		$this->removed = true;
-		unlink($this->getFilePath());
+		$filePath = $this->getFilePath();
+
+		if (!is_file($filePath)) {
+			throw new RemoveFileException(sprintf('File \'%s\' does not exist.', $filePath));
+		}
+
+		unlink($filePath);
+
+		if (is_file($filePath)) {
+			throw new RemoveFileException(sprintf('File \'%s\' cannot be removed. Check access rights.', $filePath));
+		}
 	}
 
 	/**
@@ -215,7 +276,7 @@ class File extends \Venne\Files\BaseFile
 			return;
 		}
 
-		if (!$this->oldPath && $this->path) {
+		if (!$this->oldPath && $this->size) {
 			$this->oldPath = $this->path;
 			$this->oldProtected = $this->protected;
 		}

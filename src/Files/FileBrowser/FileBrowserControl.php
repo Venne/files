@@ -16,17 +16,16 @@ use Grido\DataSources\Doctrine;
 use Nette\Application\BadRequestException;
 use Nette\Application\Responses\FileResponse;
 use Nette\Security\User as NetteUser;
+use Tracy\Debugger;
 use Venne\Files\AjaxFileUploaderControl;
 use Venne\Files\Dir;
-use Venne\Files\DirFormFactory;
 use Venne\Files\DirFormService;
-use Venne\Files\FileEditFormFactory;
 use Venne\Files\File;
-use Venne\Files\FileFormFactory;
 use Venne\Files\FileFormService;
 use Venne\Files\IAjaxFileUploaderControlFactory;
 use Venne\Files\SideComponents\FilesControl;
 use Venne\Security\User;
+use Venne\System\Components\AdminGrid\AdminGrid;
 use Venne\System\Components\AdminGrid\IAdminGridFactory;
 
 /**
@@ -35,10 +34,21 @@ use Venne\System\Components\AdminGrid\IAdminGridFactory;
 class FileBrowserControl extends \Venne\System\UI\Control
 {
 
+	use \Venne\System\AjaxControlTrait;
+
+	/** @var callable[] */
+	public $onError;
+
+	/** @var callable[] */
+	public $onFileOpen;
+
 	/** @var \Venne\Files\Dir|null */
 	private $dir;
 
-	/** @var bool */
+	/** @var \Venne\Files\File|null */
+	private $file;
+
+	/** @var boolean */
 	private $browserMode = false;
 
 	/** @var \Doctrine\ORM\EntityManager */
@@ -101,6 +111,7 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	public function render()
 	{
 		$this->template->dir = $this->dir;
+		$this->template->file = $this->file;
 		$this->template->root = $this->root;
 		parent::render();
 	}
@@ -177,19 +188,33 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		return true;
 	}
 
-	public function handleChangeDir()
+	public function handleOpenDir()
 	{
 		$this->redirect('this');
 		$this->redrawControl('content');
 	}
 
+	public function handleOpenFile()
+	{
+		$this->redirect('this');
+		$this->redrawControl('content');
+	}
+
+	public function handleDownload()
+	{
+		$this->getPresenter()->sendResponse(new FileResponse($this->file->getFilePath()));
+	}
+
 	protected function createComponentAjaxFileUploader()
 	{
 		$control = $this->ajaxFileUploaderFactory->create();
-		$control->onFileUpload[] = $this->handleFileUpload;
-		$control->onAfterFileUpload[] = $this->handleFileUploadUnlink;
+		$control->onFileUpload[] = $this->fileUpload;
+		$control->onAfterFileUpload[] = $this->fileUploadUnlink;
 		$control->onSuccess[] = function () {
 			$this->redirect('this');
+			$this->redrawControl('content');
+		};
+		$control->onReload[] = function () {
 			$this->redrawControl('content');
 
 			if ($this->sideComponent !== null) {
@@ -216,21 +241,25 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	 * @param \Venne\Files\AjaxFileUploaderControl $control
 	 * @param string $fileName
 	 */
-	public function handleFileUpload(AjaxFileUploaderControl $control, $fileName)
+	public function fileUpload(AjaxFileUploaderControl $control, $fileName)
 	{
-		$file = new File;
-		$file->setParent($this->dir);
-		$file->setFile(new \SplFileInfo($control->getAjaxDir() . '/' . $fileName));
-		$file->setAuthor($this->userRepository->find($this->netteUser->getIdentity()->getId()));
-		$this->entityManager->persist($file);
-		$this->entityManager->flush();
+		try {
+			$file = new File;
+			$file->setParent($this->dir);
+			$file->setFile(new \SplFileInfo($control->getAjaxDir() . '/' . $fileName));
+			$file->setAuthor($this->userRepository->find($this->netteUser->getIdentity()->getId()));
+			$this->entityManager->persist($file);
+			$this->entityManager->flush();
+		} catch (\Exception $e) {
+			Debugger::log($e);
+		}
 	}
 
 	/**
 	 * @param \Venne\Files\AjaxFileUploaderControl $control
 	 * @param string $fileName
 	 */
-	public function handleFileUploadUnlink(AjaxFileUploaderControl $control, $fileName)
+	public function fileUploadUnlink(AjaxFileUploaderControl $control, $fileName)
 	{
 		@unlink($control->getAjaxDir() . '/' . $fileName);
 		@unlink($control->getAjaxDir() . '/thumbnail/' . $fileName);
@@ -264,7 +293,7 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$action->getElementPrototype()->class[] = 'ajax';
 		$action->onClick[] = function ($id) use ($table) {
 			$this->redirect('this', array(
-				'key' => $id
+				'dirId' => $id
 			));
 
 			$this->redrawControl('content');
@@ -278,13 +307,13 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$form = $admin->addForm('file', 'File', function (File $file = null) {
 			return $this->fileFormService->getFormFactory(
 				$file !== null ? $file->getId() : null,
-				$this->getParameter('key')
+				$this->getParameter('dirId')
 			);
 		});
 		$dirForm = $admin->addForm('directory', 'Directory', function (Dir $dir = null) {
 			return $this->dirFormService->getFormFactory(
 				$dir !== null ? $dir->getId() : null,
-				$this->getParameter('key')
+				$this->getParameter('dirId')
 			);
 		});
 		$dirForm->onSuccess[] = function () {
@@ -306,11 +335,26 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		// Toolbar
 		$toolbar = $admin->getNavbar();
 
-		$toolbar->addSection('newDir', 'Create directory', 'file');
-		$admin->connectFormWithNavbar($dirForm, $toolbar->getSection('newDir'));
+		if ($this->file === null) {
+			$toolbar->addSection('newDir', 'Create directory', 'file');
+			$admin->connectFormWithNavbar($dirForm, $toolbar->getSection('newDir'));
 
-		$toolbar->addSection('new', 'Create file', 'file');
-		$admin->connectFormWithNavbar($form, $toolbar->getSection('new'));
+			$toolbar->addSection('new', 'Create file', 'file');
+			$admin->connectFormWithNavbar($form, $toolbar->getSection('new'));
+		} else {
+			$section = $toolbar->addSection('download', 'Download', 'download');
+			$section->onClick[] = function () {
+				$presenter = $this->getPresenter();
+
+				if (!$presenter->isAjax()) {
+					$this->handleDownload();
+				}
+
+				$this->redirect('this');
+				$this->redrawControl();
+				$presenter->payload->forward = $this->link('download!');
+			};
+		}
 
 		$admin->onClose[] = function () {
 			$this->redrawControl('content');
@@ -321,11 +365,20 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$section->onClick[] = function () {
 			$dir = $this->dir;
 
-			$this->redirect('this', array(
-				'key' => $dir->parent ? $dir->parent->id : null,
-			));
+			if ($this->file === null) {
+				$this->redirect('this', array(
+					'dirId' => $dir->parent ? $dir->parent->id : null,
+				));
 
-			$this->dir = $dir->parent ?: null;
+				$this->dir = $dir->parent ?: null;
+			} else {
+				$this->redirect('this', array(
+					'fileId' => null,
+				));
+
+				$this->file = null;
+			}
+
 			$this->redrawControl('content');
 		};
 
@@ -355,14 +408,22 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$form = $admin->addForm('file', 'File', function (File $file = null) {
 			return $this->fileFormService->getFormFactory(
 				$file !== null ? $file->getId() : null,
-				$this->getParameter('key'),
+				$this->dir !== null ? $this->dir->getId() : null,
 				FileFormService::TYPE_EDIT
 			);
 		});
+		$form->onSuccess[] = function () {
+			if ($this->sideComponent !== null) {
+				$this->sideComponent->redrawContent();
+			}
+		};
 
 		$openAction = $table->addActionEvent('open', 'Open');
 		$openAction->onClick[] = function ($id) use ($table) {
-			$this->getPresenter()->redirectUrl($this->fileRepository->find($id)->getFileUrl());
+			$this->onFileOpen($this, $this->fileRepository->find($id));
+			$this->redirect('this', array('fileId' => $id));
+
+			$this->redrawControl('content');
 		};
 
 		$downloadAction = $table->addActionEvent('download', 'Download');
@@ -378,6 +439,9 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		$deleteAction->getElementPrototype()->class[] = 'ajax';
 		$deleteAction->onClick[] = function () {
 			$this->redrawControl('content');
+			if ($this->sideComponent !== null) {
+				$this->sideComponent->redrawContent();
+			}
 		};
 
 		$admin->connectFormWithAction($form, $editAction);
@@ -392,8 +456,11 @@ class FileBrowserControl extends \Venne\System\UI\Control
 	protected function createTable()
 	{
 		$admin = $this->adminGridFactory->create($this->fileRepository);
-		$admin->onRender[] = function ($admin) {
+		$admin->onRender[] = function (AdminGrid $admin) {
 			$admin->getTable()->setTemplateFile(__DIR__ . '/Grido.latte');
+		};
+		$admin->onError[] = function (AdminGrid $admin, \Exception $e) {
+			$this->onError($this, $e);
 		};
 
 		$table = $admin->getTable();
@@ -407,14 +474,15 @@ class FileBrowserControl extends \Venne\System\UI\Control
 
 	public function loadState(array $params)
 	{
-		if (isset($params['key'])) {
-			if (substr($params['key'], 1, 1) == ':') {
-				$params['key'] = substr($params['key'], 2);
-			}
-
-			$this->dir = $this->dirRepository->find($params['key']);
+		if (isset($params['dirId'])) {
+			$this->dir = $this->dirRepository->find($params['dirId']);
 		} elseif ($this->root) {
 			$this->dir = $this->root;
+		}
+
+		if (isset($params['fileId'])) {
+			$this->file = $this->fileRepository->find($params['fileId']);
+			$this->dir = $this->file->getParent();
 		}
 
 		parent::loadState($params);
@@ -425,7 +493,11 @@ class FileBrowserControl extends \Venne\System\UI\Control
 		parent::saveState($params, $reflection);
 
 		if ($this->dir !== null) {
-			$params['key'] = $this->dir->id;
+			$params['dirId'] = $this->dir->getId();
+		}
+
+		if ($this->file !== null) {
+			$params['fileId'] = $this->file->getId();
 		}
 	}
 

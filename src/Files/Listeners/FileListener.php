@@ -16,6 +16,7 @@ use Doctrine\ORM\Event\PreFlushEventArgs;
 use Nette\DI\Container;
 use Nette\Security\User;
 use Venne\Files\BaseFile;
+use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @author Josef Kříž <pepakriz@gmail.com>
@@ -52,16 +53,25 @@ class FileListener
 		$this->publicUrl = $container->parameters['basePath'] . substr($publicDir, strlen($wwwDir));
 	}
 
+	/**
+	 * @ORM\PrePersist
+	 */
 	public function prePersist(BaseFile $entity, LifecycleEventArgs $args)
 	{
 		$this->setup($entity);
 	}
 
-	public function preFlush(BaseFile $entity, PreFlushEventArgs $args)
+	/**
+	 * @ORM\PreRemove
+	 */
+	public function preRemove(BaseFile $entity, LifecycleEventArgs $args)
 	{
 		$this->setup($entity);
 	}
 
+	/**
+	 * @ORM\PostLoad
+	 */
 	public function postLoad(BaseFile $entity, LifecycleEventArgs $args)
 	{
 		$this->setup($entity);

@@ -80,7 +80,7 @@ class FilesExtension extends \Nette\DI\CompilerExtension implements
 			));
 
 		$container->addDefinition($this->prefix('filePresenter'))
-			->setClass('Venne\Files\AdminModule\FilePresenter');
+			->setClass('Venne\Files\AdminModule\FilePresenter', array($config['publicDir']));
 
 		$router = $container->getDefinition('router');
 		$router->addSetup('$service[] = new Nette\Application\Routers\Route(?, ?);', array(

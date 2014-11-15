@@ -19,17 +19,20 @@ use Nette\Http\Session;
 class AjaxFileUploaderControl extends \Venne\System\UI\Control
 {
 
-	/** @var callable */
+	/** @var callable[] */
 	public $onFileUpload;
 
-	/** @var callable */
+	/** @var callable[] */
 	public $onAfterFileUpload;
 
-	/** @var callable */
+	/** @var callable[] */
 	public $onError;
 
-	/** @var callable */
+	/** @var callable[] */
 	public $onSuccess;
+
+	/** @var callable[] */
+	public $onReload;
 
 	/** @var string */
 	protected $ajaxDir;
@@ -143,11 +146,16 @@ class AjaxFileUploaderControl extends \Venne\System\UI\Control
 			}
 		}
 
-		if (count($this->getErrors())) {
+		if (count($this->getErrors()) > 0) {
 			$this->onError($this);
 		} else {
 			$this->onSuccess($this);
 		}
+	}
+
+	public function handleSuccess()
+	{
+		$this->onReload($this);
 	}
 
 }

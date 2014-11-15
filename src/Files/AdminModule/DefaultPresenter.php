@@ -12,9 +12,12 @@
 namespace Venne\Files\AdminModule;
 
 use Doctrine\ORM\EntityManager;
+use Tracy\Debugger;
 use Venne\Files\Dir;
+use Venne\Files\FileBrowser\FileBrowserControl;
 use Venne\Files\FileBrowser\IFileBrowserControlFactory;
 use Venne\Files\File;
+use Venne\Files\RemoveDirectoryException;
 use Venne\Files\SideComponents\FilesControl;
 use Venne\System\AdminPresenterTrait;
 
@@ -25,6 +28,13 @@ class DefaultPresenter extends \Nette\Application\UI\Presenter
 {
 
 	use AdminPresenterTrait;
+
+	/**
+	 * @var boolean
+	 *
+	 * @persistent
+	 */
+	public $browserMode = false;
 
 	/** @var \Venne\Files\FileBrowser\IFileBrowserControlFactory */
 	private $fileBrowserControlFactory;
@@ -56,6 +66,16 @@ class DefaultPresenter extends \Nette\Application\UI\Presenter
 	protected function createComponentFileBrowser()
 	{
 		$control = $this->fileBrowserControlFactory->create();
+		$control->setBrowserMode($this->browserMode);
+		$control->onError[] = function (FileBrowserControl $control, \Exception $e) {
+			if ($e instanceof RemoveDirectoryException) {
+				$this->flashMessage($this->getTranslator()->translate('Removing directory failed.'), 'warning');
+				$this->redrawControl('content');
+				return;
+			}
+
+			Debugger::log($e);
+		};
 
 		$sideComponent = $this->getSideComponents()->getSideComponent();
 		if ($sideComponent instanceof FilesControl) {
@@ -70,6 +90,9 @@ class DefaultPresenter extends \Nette\Application\UI\Presenter
 	 */
 	public function actionDefault()
 	{
+		if ($this['fileBrowser']->browserMode) {
+			$this->setLayout(false);
+		}
 	}
 
 	/**

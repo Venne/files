@@ -1,18 +1,37 @@
 {snippet content}
 
+{if $file !== null}
+	{control table-navbar}
+
+	{var $mimeType = str_replace('/', '-', $file->mimeType)}
+	{var $ext = \Nette\Utils\Strings::lower(substr($file->getName(), strrpos($file->getName(), '.') + 1))}
+
+	{if $ext=='png' || $ext=='jpg' || $ext=='gif'}
+		<img class="img-responsive" src="{$file->getFileUrl()}" alt="" />
+	{elseif Nette\Utils\Strings::startsWith($mimeType, 'text-')}
+		<pre>{=file_get_contents($file->getFilePath())}</pre>
+	{else}
+		<img src="{path @venne.files/icons/64x64/mimetypes/$mimeType.png}" alt="" />
+	{/if}
+{else}
 <script>
 	$(function () {
-		$('#sortable div.item.d').on('dblclick', function (event) {
+		{if $control->browserMode}
+		$.nette.ext('history', false);
+		{/if}
+
+		$('#sortable div.item').on('dblclick', function (event) {
+			{if $control->browserMode}
+				if ($(this).find('a').hasClass('file')) {
+					var funcNum = getUrlParam('CKEditorFuncNum');
+					window.opener.CKEDITOR.tools.callFunction(funcNum, $(this).find('a').attr('href'));
+					window.close();
+				}
+			{/if}
+
 			$.nette.ajax({
 				url: $(this).find('a').attr('href')
-				{if $control->browserMode}
-				, off: ['history']
-				{/if}
 			});
-		});
-
-		$('#sortable div.item.f').on('dblclick', function (event) {
-			window.location = $(this).find('a').attr('href')
 		});
 
 		{if $control->browserMode}
@@ -41,12 +60,12 @@
 	{define breadcrumb}
 	{if $entity->parent && $entity->parent !== $root}{include #breadcrumb, entity=>$entity->parent, ok=>true}{/if}
 		<li{if $entity === $dir} class="active"{/if}>
-			{if $entity !== $dir}<a class="ajax" href="{link this key => $entity->id}">{/if}{$entity->name}{if $entity !== $dir}</a>{/if}
+			{if $entity !== $dir}<a class="ajax" href="{link this dirId => $entity->id}">{/if}{$entity->name}{if $entity !== $dir}</a>{/if}
 		</li>
 	{/define}
 
 	<li{if $dir !== null} class="active"{/if}>
-		{if $dir !== null}<a class="ajax" href="{link this key => NULL}">{/if}{_Root}{if $dir ? $dir->id : ''}</a>{/if}
+		{if $dir !== null}<a class="ajax" href="{link this dirId => NULL}">{/if}{_Root}{if $dir ? $dir->id : ''}</a>{/if}
 	</li>
 
 	{if $entity && $entity !== $root}{include #breadcrumb entity => $entity}{/if}
@@ -61,6 +80,9 @@
 
 <script>
 	$(function () {
+		$("#sortable .item").draggable({
+			revert: true
+		});
 		$('#sortable .dropdown-toggle').on('click', function (e) {
 			e.preventDefault();
 		});
@@ -78,5 +100,6 @@
 </script>
 
 {control ajaxFileUploader}
+{/if}
 
 {/snippet}

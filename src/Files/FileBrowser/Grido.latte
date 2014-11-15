@@ -9,16 +9,18 @@
 		<br /><h5><strong>{$item->name}</strong></h5><br />{if $item instanceof \Venne\Files\File}<strong>{_MimeType}:</strong>&nbsp;{$item->mimeType}<br /><strong>{_Size}:</strong>&nbsp;{$item->size|bytes}<br />{/if}<strong>{_Created}:</strong>&nbsp;{$item->created|date:'%d.%m.%Y %H:%M:%S'}<br /><strong>{_Updated}:</strong>&nbsp;{$item->updated|date:'%d.%m.%Y %H:%M:%S'}{if $item->author}<br /><strong>{_Author}:</strong>&nbsp;{$item->author}{/if}
 	{/capture}
 
-	<div data-toggle="tooltip" title="" data-original-title="{$tooltip}" class="dropdown item {if $item instanceof \Venne\Files\Dir}d{else}f{/if}" id="{if $item instanceof \Venne\Files\Dir}d{else}f{/if}_{$item->id}">
+	<div data-toggle="tooltip" title="" data-original-title="{$tooltip}" class="dropdown item" id="{if $item instanceof \Venne\Files\Dir}d{else}f{/if}_{$item->id}">
 				{if $item instanceof \Venne\Files\Dir}
 					{var $type = 'folder'}
 					{var $mimeType = 'inode-directory'}
+					{var $url = $control->lookup('Venne\Files\FileBrowser\FileBrowserControl')->link('openDir!', array('dirId' => $item->id, 'fileId' => null))}
 				{else}
 					{var $type = 'file'}
 					{var $mimeType = str_replace('/', '-', $item->mimeType)}
+					{var $url = $control->parent->parent->browserMode ? $item->fileUrl : $control->lookup('Venne\Files\FileBrowser\FileBrowserControl')->link('openFile!', array('fileId' => $item->id))}
 				{/if}
 				{var $ext = \Nette\Utils\Strings::lower(substr($item->getName(), strrpos($item->getName(), '.') + 1))}
-				<a class="img-thumbnail dropdown-toggle{if $type=='file'} file{/if}" href="{if $type=='folder'}{=$control->lookup('Venne\Files\FileBrowser\FileBrowserControl')->link('changeDir!', array('key' => $item->id))}{else}{$basePath}/public/media/{$item->path}{/if}">
+				<a class="img-thumbnail dropdown-toggle{if $type=='file'} file{/if}" href="{$url}">
 					{if $type=='file' && ($ext=='png' || $ext=='jpg' || $ext=='gif')}
 						<img n:src="$item->getPath(), size=>'64x64', format=>8" alt="" />
 					{else}

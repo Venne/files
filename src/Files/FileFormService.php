@@ -34,6 +34,9 @@ class FileFormService extends \Venne\System\DoctrineFormService
 	/** @var \Venne\Files\FileEditFormFactory */
 	private $fileEditFormFactory;
 
+	/** @var \Kdyby\Doctrine\EntityRepository */
+	private $dirRepository;
+
 	public function __construct(
 		FileFormFactory $formFactory,
 		FileEditFormFactory $fileEditFormFactory,
@@ -43,6 +46,7 @@ class FileFormService extends \Venne\System\DoctrineFormService
 		parent::__construct($formFactory, $entityManager, $entityFormMapper);
 		$this->formFactory = $formFactory;
 		$this->fileEditFormFactory = $fileEditFormFactory;
+		$this->dirRepository = $entityManager->getRepository(Dir::class);
 	}
 
 	/**
@@ -69,7 +73,7 @@ class FileFormService extends \Venne\System\DoctrineFormService
 		$entity = parent::getEntity($primaryKey);
 
 		if ($parentId !== null) {
-			$entity->setParent($this->getRepository()->find($parentId));
+			$entity->setParent($this->dirRepository->find($parentId));
 		}
 
 		return $entity;
@@ -87,6 +91,18 @@ class FileFormService extends \Venne\System\DoctrineFormService
 	{
 		if ($e instanceof \Kdyby\Doctrine\DuplicateEntryException) {
 			$form['name']->addError($form->getTranslator()->translate('Name must be unique.'));
+
+			return;
+		}
+
+		if ($e instanceof UploadFileException) {
+			$form['name']->addError($form->getTranslator()->translate('Failed to upload file.'));
+
+			return;
+		}
+
+		if ($e instanceof RenameFileException) {
+			$form['name']->addError($form->getTranslator()->translate('Failed to rename file.'));
 
 			return;
 		}

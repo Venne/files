@@ -80,6 +80,18 @@ class DirFormService extends \Venne\System\DoctrineFormService
 			return;
 		}
 
+		if ($e instanceof CreateDirectoryException) {
+			$form['name']->addError($form->getTranslator()->translate('Failed to create directory.'));
+
+			return;
+		}
+
+		if ($e instanceof RenameDirectoryException) {
+			$form['name']->addError($form->getTranslator()->translate('Failed to rename directory.'));
+
+			return;
+		}
+
 		parent::error($form, $e);
 	}
 

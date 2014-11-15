@@ -87,37 +87,35 @@ class Dir extends \Venne\Files\BaseFile
 	/**
 	 * @internal
 	 *
-	 * @ORM\PreFlush()
+	 * @ORM\PostPersist()
 	 */
-	public function preUpdate()
+	public function postPersist()
 	{
-		if ($this->removed) {
-			return;
-		}
-
 		$protectedPath = $this->protectedDir . '/' . $this->path;
 		$publicPath = $this->publicDir . '/' . $this->path;
 
+		$this->create($protectedPath);
+		$this->create($publicPath);
+	}
+
+	/**
+	 * @internal
+	 *
+	 * @ORM\PostUpdate()
+	 */
+	public function postUpdate()
+	{
 		if ($this->oldPath) {
+			$protectedPath = $this->protectedDir . '/' . $this->path;
+			$publicPath = $this->publicDir . '/' . $this->path;
+
 			$oldProtectedPath = $this->protectedDir . '/' . $this->oldPath;
 			$oldPublicPath = $this->publicDir . '/' . $this->oldPath;
 
-			if (is_dir($oldProtectedPath)) {
-				rename($oldProtectedPath, $protectedPath);
-			}
-			if (is_dir($oldPublicPath)) {
-				rename($oldPublicPath, $publicPath);
-			}
+			$this->rename($oldProtectedPath, $protectedPath);
+			$this->rename($oldPublicPath, $publicPath);
 
 			return;
-		}
-
-		if (!is_dir($protectedPath)) {
-			mkdir($protectedPath, 0777, true);
-		}
-
-		if (!is_dir($publicPath)) {
-			mkdir($publicPath, 0777, true);
 		}
 	}
 
@@ -145,8 +143,8 @@ class Dir extends \Venne\Files\BaseFile
 		$protectedPath = $this->protectedDir . '/' . $this->path;
 		$publicPath = $this->publicDir . '/' . $this->path;
 
-		rmdir($protectedPath);
-		rmdir($publicPath);
+		$this->remove($protectedPath);
+		$this->remove($publicPath);
 	}
 
 	/**
@@ -209,6 +207,63 @@ class Dir extends \Venne\Files\BaseFile
 
 		foreach ($this->getFiles() as $file) {
 			$file->copyPermission();
+		}
+	}
+
+	/**
+	 * @param string $path
+	 */
+	public function remove($path)
+	{
+		if (!is_dir($path)) {
+			throw new RemoveDirectoryException(sprintf('Directory \'%s\' does not exist.', $path));
+		}
+
+		rmdir($path);
+
+		if (is_dir($path)) {
+			throw new RemoveDirectoryException(sprintf('Directory \'%s\' cannot be removed. Check access rights.', $path));
+		}
+	}
+
+	/**
+	 * @param string $path
+	 */
+	private function create($path)
+	{
+		if (is_dir($path)) {
+			throw new CreateDirectoryException(sprintf('Directory \'%s\' already exists.', $path));
+		}
+
+		mkdir($path);
+
+		if (!is_dir($path)) {
+			throw new CreateDirectoryException(sprintf('Directory \'%s\' cannot be created. Check access rights.', $path));
+		}
+	}
+
+	/**
+	 * @param string $oldPath
+	 * @param string $path
+	 */
+	private function rename($oldPath, $path)
+	{
+		if (!is_file($oldPath)) {
+			throw new RenameDirectoryException(sprintf('File \'%s\' does not exist.', $oldPath));
+		}
+
+		if (is_file($path)) {
+			throw new RenameDirectoryException(sprintf('File \'%s\' already exists.', $path));
+		}
+
+		rename($oldPath, $path);
+
+		if (is_file($oldPath)) {
+			throw new RenameDirectoryException(sprintf('File \'%s\' already exists.', $oldPath));
+		}
+
+		if (!is_file($path)) {
+			throw new RenameDirectoryException(sprintf('File \'%s\' does not exist.', $path));
 		}
 	}
 

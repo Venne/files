@@ -14,6 +14,7 @@ namespace Venne\Files\AdminModule;
 use Doctrine\ORM\EntityManager;
 use Nette\Application\BadRequestException;
 use Nette\Application\ForbiddenRequestException;
+use Nette\Http\Session;
 use Nette\Utils\Image;
 use Venne\Files\File;
 use Venne\Files\PermissionDeniedException;
@@ -23,6 +24,8 @@ use Venne\Files\PermissionDeniedException;
  */
 class FilePresenter extends \Nette\Application\UI\Presenter
 {
+
+	const DIRECTORY_CACHE = '_cache';
 
 	/** @var string */
 	public $size;
@@ -36,16 +39,24 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 	/** @var string */
 	public $url;
 
+	/** @var string */
+	private $cacheDir;
+
 	/** @var bool */
-	protected $cached = false;
+	private $cached = false;
 
 	/** @var \Kdyby\Doctrine\EntityRepository */
-	protected $fileRepository;
+	private $fileRepository;
 
-	public function __construct(EntityManager $entityManager)
+	/** @var \Nette\Http\Session */
+	private $session;
+
+	public function __construct($cacheDir, EntityManager $entityManager, Session $session)
 	{
+		$this->cacheDir = $cacheDir;
 		$this->fileRepository = $entityManager->getRepository(File::class);
 		$this->autoCanonicalize = false;
+		$this->session = $session;
 	}
 
 	protected function startup()
@@ -81,7 +92,7 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 
 	public function actionImage()
 	{
-		if (substr($this->url, 0, 7) === '_cache/') {
+		if (substr($this->url, 0, 7) === self::DIRECTORY_CACHE . '/') {
 			$this->cached = true;
 			$this->url = substr($this->url, 7);
 		}
@@ -91,6 +102,8 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 		}
 
 		$image = Image::fromFile($entity->getFilePath());
+
+		$this->session->close();
 
 		// resize
 		if ($this->size && $this->size !== 'default') {
@@ -109,8 +122,9 @@ class FilePresenter extends \Nette\Application\UI\Presenter
 		$type = $this->type === 'jpg' ? Image::JPEG : $this->type === 'gif' ? Image::GIF : Image::PNG;
 
 		$file = sprintf(
-			'%s/%s/%s/%s/%s',
-			$this->context->parameters['wwwDir'],
+			'%s/%s/%s/%s/%s/%s',
+			$this->cacheDir,
+			self::DIRECTORY_CACHE,
 			$this->size,
 			$this->format,
 			$this->type,

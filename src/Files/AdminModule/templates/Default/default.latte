@@ -11,10 +11,42 @@
 {/block}
 
 {block breadcrumb}
+	{if $presenter->layout}
 	{include #parent}
 	<li class="active">{include #header}</li>
+	{/if}
 {/block}
 
 {block content}
+	{if !$presenter->layout}
+<!DOCTYPE html>
+<html>
+<head>
+	{control adminCss}
 
-{control fileBrowser}
+	{control adminJs}
+
+	<link rel="shortcut icon" href="{path @venne.venne/icon.png}"/>
+	<title n:inner-snippet="title">Venne | {block #title}{include #header}{/block}</title>
+</head>
+
+<body>
+<div class="container content" n:snippet="content">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="panel panel-default">
+				<div class="panel-body">
+					{control fileBrowser}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
+{else}
+	{control fileBrowser}
+{/if}
+
+
